@@ -1,4 +1,5 @@
 #define USE_ENV
+#define L298N_PWM = 12; // will adjust pin
 // #define DISABLE_DEBUG
 
 #include "env.h"
@@ -7,6 +8,7 @@
 
 #include <WiFi.h>
 #include <WebServer.h>
+
 
 WebServer server(80);
 
@@ -54,6 +56,8 @@ void assignCurrentTime() {
 CREATE_ASYNC_FN(GET_dateTime, 15000, assignCurrentTime);
 
 void setup() {
+  pinMode(L298N_PWM, OUTPUT);
+
   Serial.begin(115200);
   configTime(GMT, DST, ntpServer);
 
@@ -67,7 +71,7 @@ void setup() {
   Serial.println(WiFi.softAPIP());  // usually 192.168.4.1
 
   Wifi localWifi = getLocalWifi();  // Load saved WiFi creds
-  WIFI_initialize();                // Initialize 1st wifi connection
+  WIFI_initialize(localWifi);       // Initialize 1st wifi connection
 
   if (getWiFiStatus()) {
     Serial.println("\nConnected to STA WiFi!");
@@ -82,11 +86,18 @@ void setup() {
 
 void loop() {
   server.handleClient();
-  asyncDelay(staConnection);
+  asyncDelay(GET_dateTime);
+  rtdb_data data = GET_DATA(); // get real time data schedules and other variables
 
-
-  if (TIME_isFeedNow()) {
+  analogWrite(L298N_PWM, 255); // control the motor speed, adjust 0-255
+  
+  if (TIME_isFeedNow(data)) {
     CL_trigger();
+
+    // logic to check if food amount is accurate enough
+    rotateAction();
+    delay(2000);
+    stopRotateAction();
     // code here .....
   }
 }

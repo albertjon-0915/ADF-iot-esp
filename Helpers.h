@@ -1,13 +1,19 @@
 #ifndef HELPERS_H
 #define HELPERS_H
+
+#include <Preferences.h>
+#include <ONOFF.h>
+#include <HTTPClient.h>
+#include <Firebase_ESP_Client.h>
+#include <FirebaseJson.h>
+#include "addons/TokenHelper.h"
+#include "addons/RTDBHelper.h"
+#include "time.h"
+#include "env.h"
+
 // =========================================================================================================
 // ========================================== WIFI CONNECTION ==============================================
 // =========================================================================================================
-
-#include <Preferences.h>
-#include <HTTPClient.h>
-#include "time.h"
-#include "env.h"
 
 Preferences prefs;
 
@@ -32,8 +38,8 @@ inline Wifi getLocalWifi() {
 inline void localSaveCreds(Wifi wifi) {
   if (wifi.ssid.isEmpty()) { return; }
   prefs.begin("wifi", false);
-  if (!wifi.ssid.isEmpty()) { refs.putString("ssid", wifi.ssid()); }
-  if (!wifi.pass.isEmpty()) { prefs.putString("pass", wifi.psk()); }
+  if (!wifi.ssid.isEmpty()) { prefs.putString("ssid", wifi.ssid); }
+  if (!wifi.pass.isEmpty()) { prefs.putString("pass", wifi.psk); }
   prefs.end();
   Serial.println("WiFi credentials saved.");
 }
@@ -105,6 +111,10 @@ inline CON_STATUS fireBaseConnect() {
   config.api_key = FIREBASE_KEY;
   config.database_url = FIREBASE_DB_URL;
 
+  config.token_status_callback = tokenStatusCallback;
+  Firebase.begin(&config, &auth);
+  Firebase.reconnectWiFi(true);
+
   if (Firebase.signUp(&config, &auth, "", "")) {
     Serial.println("Sign up, OK!");
     // signUpOk = true;
@@ -113,10 +123,6 @@ inline CON_STATUS fireBaseConnect() {
 
   Serial.printf("%s\n", config.signer.signupError.message.c_str());
   return ERROR;
-
-  config.token_status_callback = tokenStatusCallback;
-  Firebase.begin(&config, &auth);
-  Firebase.reconnectWiFi(true);
 }
 
 struct rtdb_data {
@@ -249,6 +255,43 @@ inline bool TIME_isFeedNow(rtdb_data &sched) {
 
 // =========================================================================================================
 // ============================================= DATE TIME =================================================
+// =========================================================================================================
+
+
+// =========================================================================================================
+// ========================================== MOTOR MOVEMENT ===============================================
+// =========================================================================================================
+
+#define L298N_IN1 11
+#define L298N_IN2 10
+
+Params_onoff params1 = {
+  .pin = L298N_IN1,
+  .startState = false,
+  .debug = true
+};
+
+Params_onoff params2 = {
+  .pin = L298N_IN2,
+  .startState = false,
+  .debug = true
+};
+
+ONOFF motorControl_1(params1); 
+ONOFF motorControl_2(params2); 
+
+void rotateAction() {  // adjust to to know whether to extend or retract
+  motorControl_1.on();
+  motorControl_2.off();
+}
+
+void stopRotateAction(){
+  motorControl_1.off();
+  motorControl_2.off();
+}
+
+// =========================================================================================================
+// ========================================== MOTOR MOVEMENT ===============================================
 // =========================================================================================================
 
 #endif  // HELPERS_H
