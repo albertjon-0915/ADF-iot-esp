@@ -2,7 +2,7 @@
 #define HELPERS_H
 
 #include <Preferences.h>
-#include <ONOFF.h>
+#include <ONOFF.h> // include library on sketch (https://github.com/albertjon-0915/ON_OFF)
 #include <HTTPClient.h>
 #include <Firebase_ESP_Client.h>
 #include <FirebaseJson.h>
