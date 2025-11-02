@@ -1,5 +1,6 @@
 #define USE_ENV
-#define L298N_PWM = 12; // will adjust pin
+#define L298N_PWM 12; // will adjust pin
+#define LM393_CPM 34; // will adjust pin
 // #define DISABLE_DEBUG
 
 #include "env.h"
@@ -16,7 +17,9 @@ const char* ntpServer = "pool.ntp.org";
 const long GMT = 8 * 3600;  // GMT+8 (Philippines time)
 const int DST = 0;          // No DST in PH
 
-String NOW_time = "";
+String TIME_now = "";
+
+rtdb_data data;
 
 void handleRoot() {
   server.send(200, "text/html",
@@ -50,16 +53,22 @@ void WIFI_initialize(Wifi& local) {
 }
 
 void assignCurrentTime() {
-  NOW_time = getLocalTime();
+  TIME_now = getLocalTime();
+}
+
+void assignRtdbData() {
+  data = GET_DATA();
 }
 
 CREATE_ASYNC_FN(GET_dateTime, 15000, assignCurrentTime);
+CREATE_ASYNC_FN(GET_rtdbData, 2000, assignRtdbData);
 
 void setup() {
   pinMode(L298N_PWM, OUTPUT);
 
   Serial.begin(115200);
   configTime(GMT, DST, ntpServer);
+  WEIGHT_init(1000.0, 200, 800);
 
   WiFi.mode(WIFI_MODE_APSTA);  // AP + STA mode
 
@@ -87,17 +96,28 @@ void setup() {
 void loop() {
   server.handleClient();
   asyncDelay(GET_dateTime);
-  rtdb_data data = GET_DATA(); // get real time data schedules and other variables
-
-  analogWrite(L298N_PWM, 255); // control the motor speed, adjust 0-255
+  asyncDelay(GET_rtdbData);
+  // rtdb_data data = GET_DATA(); // get real time data schedules and other variables
+  
+  float weight = WEIGHT_read(LM393_CPM); // read analog value and convert to grams
+  analogWrite(L298N_PWM, 155); // control the motor speed, adjust 0-255
   
   if (TIME_isFeedNow(data)) {
-    CL_trigger();
 
-    // logic to check if food amount is accurate enough
+    SEND_DATA(DISPENSING);
     rotateAction();
-    delay(2000);
-    stopRotateAction();
+    
+    if(WEIGHT_isStopFeeding(data, weight)){
+      SEND_DATA(FOODREADY);
+      stopRotateAction();
+      CL_trigger();
+      return;
+    }
     // code here .....
+  }
+
+  // if the food is already eaten by the pet, update status
+  if(weight < 100){
+    SEND_DATA(IDLE);
   }
 }

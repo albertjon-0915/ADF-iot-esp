@@ -153,11 +153,26 @@ inline rtdb_data GET_DATA() {
   return jsonResp;
 }
 
+  rtdb_data IDLE = {
+    .FB_status = "IDLE",
+    .FB_isFeeding = false
+  };    
+
+  rtdb_data DISPENSING = {
+    .FB_status = "DISPENSING",
+    .FB_isFeeding = true
+  };    
+
+  rtdb_data FOODREADY = {
+    .FB_status = "FOODREADY",
+    .FB_isFeeding = true
+  };
+
 inline void SEND_DATA(rtdb_data &data) {
   if (Firebase.ready() && fireBaseConnect() == OK) {
     FirebaseJson json;
-    json.set("feeding_status", data.FB_status);
-    json.set("isFeeding", data.FB_isFeeding);
+    json.set("feeding_status", data.FB_status); // IDLE , DISPENSING, FOODREADY
+    json.set("isFeeding", data.FB_isFeeding); // true or false
 
     /*
       Can use(set/get):
@@ -226,7 +241,7 @@ inline void CL_trigger() {
 // ============================================= DATE TIME =================================================
 // =========================================================================================================
 
-extern String NOW_time;
+extern String TIME_now;
 
 
 inline String getLocalTime() {
@@ -247,9 +262,9 @@ inline String getLocalTime() {
 }
 
 inline bool TIME_isFeedNow(rtdb_data &sched) {
-  if (NOW_time == sched.FB_breakfast) { return true; }
-  if (NOW_time == sched.FB_lunch) { return true; }
-  if (NOW_time == sched.FB_dinner) { return true; }
+  if (TIME_now == sched.FB_breakfast) { return true; }
+  if (TIME_now == sched.FB_lunch) { return true; }
+  if (TIME_now == sched.FB_dinner) { return true; }
   return false;
 }
 
@@ -280,18 +295,66 @@ Params_onoff params2 = {
 ONOFF motorControl_1(params1); 
 ONOFF motorControl_2(params2); 
 
-void rotateAction() {  // adjust to to know whether to extend or retract
+inline void rotateAction() {  // adjust to to know whether to extend or retract
+  Serial.println("Rotating motor...");
   motorControl_1.on();
   motorControl_2.off();
 }
 
-void stopRotateAction(){
+inline void stopRotateAction(){
+  Serial.println("Stopping motor...");
   motorControl_1.off();
   motorControl_2.off();
 }
 
 // =========================================================================================================
 // ========================================== MOTOR MOVEMENT ===============================================
+// =========================================================================================================
+
+
+// =========================================================================================================
+// ======================================== WEIGHT MEASUREMENT =============================================
+// =========================================================================================================
+
+// NOTE: Didn't use class as we are only reading 1 pin/sensor, pwede baguhin to if ever na needed pero for now this should work
+
+struct WEIGHT_var{
+  float m_known,    // use 1kg as basis for our colibration for grams
+  int no_load,            // initial reading with no load on our force sensor
+  int with_load,          // reading with known load on our force sensor
+  float slope             // calibration slope
+};
+
+static WEIGHT_Var weightData;
+
+// Initialize calibration
+inline void WEIGHT_init(float knownWeight, int noLoad, int withLoad) {
+  weightData.m_known = knownWeight;
+  weightData.no_load = noLoad;
+  weightData.with_load = withLoad;
+  weightData.slope = weightData.m_known / (weightData.with_load - weightData.no_load);
+}
+
+inline float WEIGHT_read(int pin) {
+  int reading = analogRead(pin);
+  float weight = weightData.slope * (reading - weightData.no_load);
+  if (weight < 0) weight = 0;
+
+  return round(weight);
+}
+
+inline bool WEIGHT_isStopFeeding(rtdb_data &food_amount, int current_weight) {
+  double rtdb_weight = food_amount.FB_foodAmount;
+
+  if (rtdb_weight < current_weight) {
+    return false;
+  } else {
+    return true;
+  }
+  
+}
+// =========================================================================================================
+// ======================================== WEIGHT MEASUREMENT =============================================
 // =========================================================================================================
 
 #endif  // HELPERS_H
