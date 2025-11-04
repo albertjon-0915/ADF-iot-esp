@@ -1,7 +1,6 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#include <Arduino.h>
 #include <type_traits>
 
 // Disable Serial.print/println

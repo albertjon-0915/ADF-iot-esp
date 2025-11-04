@@ -1,15 +1,19 @@
 #ifndef HELPERS_H
 #define HELPERS_H
+// #define USE_ENV
 
 #include <Preferences.h>
-#include <ONOFF.h>  // include library on sketch (https://github.com/albertjon-0915/ON_OFF)
+#include "esp_wifi.h"
+#include "ONOFF.h"  // include library on sketch (https://github.com/albertjon-0915/ON_OFF)
 #include <HTTPClient.h>
 #include <Firebase_ESP_Client.h>
-#include <FirebaseJson.h>
+// #include <FirebaseJson.h>
 #include "addons/TokenHelper.h"
 #include "addons/RTDBHelper.h"
 #include "time.h"
 #include "env.h"
+
+
 
 // =========================================================================================================
 // ========================================== WIFI CONNECTION ==============================================
@@ -39,7 +43,7 @@ inline void localSaveCreds(Wifi wifi) {
   if (wifi.ssid.isEmpty()) { return; }
   prefs.begin("wifi", false);
   if (!wifi.ssid.isEmpty()) { prefs.putString("ssid", wifi.ssid); }
-  if (!wifi.pass.isEmpty()) { prefs.putString("pass", wifi.psk); }
+  if (!wifi.pass.isEmpty()) { prefs.putString("pass", wifi.pass); }
   prefs.end();
   Serial.println("WiFi credentials saved.");
 }
@@ -65,8 +69,12 @@ inline void startSmartConfig() {
   Serial.print("STA IP: ");
   Serial.println(WiFi.localIP());
 
-  // Save new credentials
-  wifi = { WiFi.SSID, WiFi.psk };
+  // Grab SSID and password from ESP32 Wi-Fi config
+  wifi_config_t wifi_config;
+  esp_wifi_get_config(WIFI_IF_STA, &wifi_config);
+
+  wifi.ssid = String((char *)wifi_config.sta.ssid);
+  wifi.pass = String((char *)wifi_config.sta.password);
   localSaveCreds(wifi);
 
   WiFi.stopSmartConfig();  // stop listening until requested again
@@ -93,10 +101,14 @@ inline bool getWiFiStatus() {
 // ======================================== FIREBASE CONNECTION ============================================
 // =========================================================================================================
 
+FirebaseData fbdo;
+FirebaseAuth auth;
+FirebaseConfig config;
+
 enum CON_STATUS {
   INVALID_CREDS,
   ERROR,
-  OK
+  SUCCESS
 };
 
 inline bool is_valid_config() {
@@ -118,7 +130,7 @@ inline CON_STATUS fireBaseConnect() {
   if (Firebase.signUp(&config, &auth, "", "")) {
     Serial.println("Sign up, OK!");
     // signUpOk = true;
-    return OK;
+    return SUCCESS;
   }
 
   Serial.printf("%s\n", config.signer.signupError.message.c_str());
@@ -137,16 +149,17 @@ struct rtdb_data {
 inline rtdb_data GET_DATA() {
   rtdb_data jsonResp;
 
-  if (Firebase.ready() && fireBaseConnect() == OK) {
+  if (Firebase.ready() && fireBaseConnect() == SUCCESS) {
     if (Firebase.RTDB.getJSON(&fbdo, "feeder_status")) {
       FirebaseJson &json = fbdo.jsonObject();
+      FirebaseJsonData data;
 
-      json.get(jsonResp.FB_breakfast, "breakfast_sched");
-      json.get(jsonResp.FB_lunch, "lunch_sched");
-      json.get(jsonResp.FB_dinner, "dinner_sched");
-      json.get(jsonResp.FB_status, "feeding_status");
-      json.get(jsonResp.FB_foodAmount, "food_amount");
-      json.get(jsonResp.FB_isFeeding, "isFeeding");
+      if (json.get(data, "breakfast_sched")) jsonResp.FB_breakfast = data.stringValue;
+      if (json.get(data, "lunch_sched")) jsonResp.FB_lunch = data.stringValue;
+      if (json.get(data, "dinner_sched")) jsonResp.FB_dinner = data.stringValue;
+      if (json.get(data, "feeding_status")) jsonResp.FB_status = data.stringValue;
+      if (json.get(data, "food_amount")) jsonResp.FB_foodAmount = data.doubleValue;
+      if (json.get(data, "isFeeding")) jsonResp.FB_isFeeding = data.boolValue;
     }
   }
 
@@ -169,7 +182,7 @@ rtdb_data FOODREADY = {
 };
 
 inline void SEND_DATA(rtdb_data &data) {
-  if (Firebase.ready() && fireBaseConnect() == OK) {
+  if (Firebase.ready() && fireBaseConnect() == SUCCESS) {
     FirebaseJson json;
     json.set("feeding_status", data.FB_status);  // IDLE , DISPENSING, FOODREADY
     json.set("isFeeding", data.FB_isFeeding);    // true or false
@@ -188,7 +201,6 @@ inline void SEND_DATA(rtdb_data &data) {
       - updateNode --> for advanced use/to update individual node without affecting other json files
     */
     if (Firebase.RTDB.updateNode(&fbdo, "feeder_status", &json)) {
-      Serial.println(getLocalTime());
       Serial.println("Successfully saved at" + fbdo.dataPath());
       Serial.println("( " + fbdo.dataPath() + " )");
     } else {
@@ -202,12 +214,13 @@ inline void SEND_DATA(rtdb_data &data) {
 // =========================================================================================================
 
 
+
 // =========================================================================================================
 // ======================================== HTTP CLOUD FUNCTION ============================================
 // =========================================================================================================
 
 enum response {
-  SUCCESS,
+  DONE,
   FAILED
 };
 
@@ -219,7 +232,7 @@ inline response FB_createLog() {
   int code = http.GET();
   http.end();
 
-  return code > 0 ? SUCCESS : FAILED;
+  return code > 0 ? DONE : FAILED;
 }
 
 inline void CL_trigger() {
@@ -237,14 +250,14 @@ inline void CL_trigger() {
 // =========================================================================================================
 
 
+
 // =========================================================================================================
 // ============================================= DATE TIME =================================================
 // =========================================================================================================
 
 extern String TIME_now;
 
-
-inline String getLocalTime() {
+inline String getCurrentTime() {
   struct tm timeinfo;
   if (!getLocalTime(&timeinfo)) {
     Serial.println("Failed to obtain time");
@@ -271,6 +284,7 @@ inline bool TIME_isFeedNow(rtdb_data &sched) {
 // =========================================================================================================
 // ============================================= DATE TIME =================================================
 // =========================================================================================================
+
 
 
 // =========================================================================================================
@@ -312,6 +326,7 @@ inline void stopRotateAction() {
 // =========================================================================================================
 
 
+
 // =========================================================================================================
 // ======================================== WEIGHT MEASUREMENT =============================================
 // =========================================================================================================
@@ -324,7 +339,7 @@ struct WEIGHT {
   float WEIGHT_noLoad;      // ADC reading in weight(grams)
   float WEIGHT_wLoad;       // actual reference weight(grams)
   float TARE_offset = 0.0;  // offset if meron pang bowl na buffer sa gitna or something
-}
+};
 
 extern WEIGHT WEIGHT_Data;
 float slope;

@@ -61,7 +61,7 @@ void WIFI_initialize(Wifi& local) {
 }
 
 void assignCurrentTime() {
-  TIME_now = getLocalTime();
+  TIME_now = getCurrentTime();
 }
 
 void assignRtdbData() {
