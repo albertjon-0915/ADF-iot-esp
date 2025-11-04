@@ -2,7 +2,7 @@
 #define HELPERS_H
 
 #include <Preferences.h>
-#include <ONOFF.h> // include library on sketch (https://github.com/albertjon-0915/ON_OFF)
+#include <ONOFF.h>  // include library on sketch (https://github.com/albertjon-0915/ON_OFF)
 #include <HTTPClient.h>
 #include <Firebase_ESP_Client.h>
 #include <FirebaseJson.h>
@@ -153,26 +153,26 @@ inline rtdb_data GET_DATA() {
   return jsonResp;
 }
 
-  rtdb_data IDLE = {
-    .FB_status = "IDLE",
-    .FB_isFeeding = false
-  };    
+rtdb_data IDLE = {
+  .FB_status = "IDLE",
+  .FB_isFeeding = false
+};
 
-  rtdb_data DISPENSING = {
-    .FB_status = "DISPENSING",
-    .FB_isFeeding = true
-  };    
+rtdb_data DISPENSING = {
+  .FB_status = "DISPENSING",
+  .FB_isFeeding = true
+};
 
-  rtdb_data FOODREADY = {
-    .FB_status = "FOODREADY",
-    .FB_isFeeding = true
-  };
+rtdb_data FOODREADY = {
+  .FB_status = "FOODREADY",
+  .FB_isFeeding = true
+};
 
 inline void SEND_DATA(rtdb_data &data) {
   if (Firebase.ready() && fireBaseConnect() == OK) {
     FirebaseJson json;
-    json.set("feeding_status", data.FB_status); // IDLE , DISPENSING, FOODREADY
-    json.set("isFeeding", data.FB_isFeeding); // true or false
+    json.set("feeding_status", data.FB_status);  // IDLE , DISPENSING, FOODREADY
+    json.set("isFeeding", data.FB_isFeeding);    // true or false
 
     /*
       Can use(set/get):
@@ -292,16 +292,16 @@ Params_onoff params2 = {
   .debug = true
 };
 
-ONOFF motorControl_1(params1); 
-ONOFF motorControl_2(params2); 
+ONOFF motorControl_1(params1);
+ONOFF motorControl_2(params2);
 
-inline void rotateAction() {  // adjust to to know whether to extend or retract
+inline void rotateAction() {
   Serial.println("Rotating motor...");
   motorControl_1.on();
   motorControl_2.off();
 }
 
-inline void stopRotateAction(){
+inline void stopRotateAction() {
   Serial.println("Stopping motor...");
   motorControl_1.off();
   motorControl_2.off();
@@ -316,43 +316,56 @@ inline void stopRotateAction(){
 // ======================================== WEIGHT MEASUREMENT =============================================
 // =========================================================================================================
 
-// NOTE: Didn't use class as we are only reading 1 pin/sensor, pwede baguhin to if ever na needed pero for now this should work
-
-struct WEIGHT_var{
-  float m_known,    // use 1kg as basis for our colibration for grams
-  int no_load,            // initial reading with no load on our force sensor
-  int with_load,          // reading with known load on our force sensor
-  float slope             // calibration slope
-};
-
-static WEIGHT_Var weightData;
-
-// Initialize calibration
-inline void WEIGHT_init(float knownWeight, int noLoad, int withLoad) {
-  weightData.m_known = knownWeight;
-  weightData.no_load = noLoad;
-  weightData.with_load = withLoad;
-  weightData.slope = weightData.m_known / (weightData.with_load - weightData.no_load);
+struct WEIGHT {
+  int FSR_PIN;
+  int SAMPLES;              // number of samples for smoothing
+  float ADC_noLoad;         // ADC reading (no load)
+  float ADC_wLoad;          // ADC reading (with load)
+  float WEIGHT_noLoad;      // ADC reading in weight(grams)
+  float WEIGHT_wLoad;       // actual reference weight(grams)
+  float TARE_offset = 0.0;  // offset if meron pang bowl na buffer sa gitna or something
 }
 
-inline float WEIGHT_read(int pin) {
-  int reading = analogRead(pin);
-  float weight = weightData.slope * (reading - weightData.no_load);
-  if (weight < 0) weight = 0;
+extern WEIGHT WEIGHT_Data;
+float slope;
 
-  return round(weight);
+inline void WEIGHT_init() {
+  slope = (WEIGHT_Data.WEIGHT_wLoad - WEIGHT_Data.WEIGHT_noLoad) / (WEIGHT_Data.ADC_wLoad - WEIGHT_Data.ADC_noLoad);  // slope
 }
 
-inline bool WEIGHT_isStopFeeding(rtdb_data &food_amount, int current_weight) {
+inline int WEIGHT_read() {
+  long sum = 0;
+  for (int i = 0; i < WEIGHT_Data.SAMPLES; ++i) {
+    sum += analogRead(WEIGHT_Data.FSR_PIN);
+    delay(5);  // buffer
+  }
+  return sum / WEIGHT_Data.SAMPLES;
+}
+
+inline float WEIGHT_getGrams() {
+  int raw = WEIGHT_read();
+  float grams = slope * (raw - WEIGHT_Data.ADC_noLoad) + WEIGHT_Data.WEIGHT_noLoad;  // linear formula
+  grams -= WEIGHT_Data.TARE_offset;                                                  // subtract offset if any
+  if (grams < 0.0) grams = 0.0;                                                      // prevent negative values
+
+  Serial.print("ADC: ");
+  Serial.print(raw);
+  Serial.print("  →  Weight (g): ");
+  Serial.println(grams, 1);
+
+  return grams;
+}
+
+inline bool WEIGHT_isStopFeeding(rtdb_data &food_amount, float current_weight) {
   double rtdb_weight = food_amount.FB_foodAmount;
 
   if (rtdb_weight < current_weight) {
-    return false;
-  } else {
     return true;
+  } else {
+    return false;
   }
-  
 }
+
 // =========================================================================================================
 // ======================================== WEIGHT MEASUREMENT =============================================
 // =========================================================================================================

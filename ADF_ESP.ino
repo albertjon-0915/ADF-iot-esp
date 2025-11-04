@@ -1,6 +1,6 @@
 #define USE_ENV
-#define L298N_PWM 12; // will adjust pin
-#define LM393_CPM 34; // will adjust pin
+#define L298N_PWM 12  // will adjust pin
+#define LM393_CPM 34  // will adjust pin
 // #define DISABLE_DEBUG
 
 #include "env.h"
@@ -9,7 +9,6 @@
 
 #include <WiFi.h>
 #include <WebServer.h>
-
 
 WebServer server(80);
 
@@ -20,6 +19,15 @@ const int DST = 0;          // No DST in PH
 String TIME_now = "";
 
 rtdb_data data;
+
+WEIGHT WEIGHT_Data = {
+  .FSR_PIN = LM393_CPM,
+  .SAMPLES = 20,
+  .ADC_noLoad = 4095,
+  .ADC_wLoad = 1100.0,
+  .WEIGHT_noLoad = 0.0,
+  .WEIGHT_wLoad = 400.0
+};
 
 void handleRoot() {
   server.send(200, "text/html",
@@ -68,7 +76,7 @@ void setup() {
 
   Serial.begin(115200);
   configTime(GMT, DST, ntpServer);
-  WEIGHT_init(1000.0, 200, 800);
+  WEIGHT_init();
 
   WiFi.mode(WIFI_MODE_APSTA);  // AP + STA mode
 
@@ -98,26 +106,25 @@ void loop() {
   asyncDelay(GET_dateTime);
   asyncDelay(GET_rtdbData);
   // rtdb_data data = GET_DATA(); // get real time data schedules and other variables
-  
-  float weight = WEIGHT_read(LM393_CPM); // read analog value and convert to grams
-  analogWrite(L298N_PWM, 155); // control the motor speed, adjust 0-255
-  
+
+  float weight = WEIGHT_getGrams();  // read analog value and convert to grams
+  analogWrite(L298N_PWM, 155);       // control the motor speed, adjust 0-255
+
   if (TIME_isFeedNow(data)) {
 
     SEND_DATA(DISPENSING);
     rotateAction();
-    
-    if(WEIGHT_isStopFeeding(data, weight)){
+
+    if (WEIGHT_isStopFeeding(data, weight)) {
       SEND_DATA(FOODREADY);
       stopRotateAction();
       CL_trigger();
       return;
     }
-    // code here .....
   }
 
   // if the food is already eaten by the pet, update status
-  if(weight < 100){
+  if (weight < 100) {
     SEND_DATA(IDLE);
   }
 }
