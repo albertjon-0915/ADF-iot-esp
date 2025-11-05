@@ -1,4 +1,3 @@
-#define USE_ENV
 #define L298N_PWM 12  // will adjust pin
 #define LM393_CPM 34  // will adjust pin
 // #define DISABLE_DEBUG

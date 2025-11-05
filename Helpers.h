@@ -1,6 +1,5 @@
 #ifndef HELPERS_H
 #define HELPERS_H
-// #define USE_ENV
 
 #include <Preferences.h>
 #include "esp_wifi.h"
