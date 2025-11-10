@@ -1,16 +1,16 @@
 #ifndef HELPERS_H
 #define HELPERS_H
 
+#include "env.h"
 #include <Preferences.h>
 #include "esp_wifi.h"
 #include "ONOFF.h"  // include library on sketch (https://github.com/albertjon-0915/ON_OFF)
 #include <HTTPClient.h>
 #include <Firebase_ESP_Client.h>
-// #include <FirebaseJson.h>
 #include "addons/TokenHelper.h"
 #include "addons/RTDBHelper.h"
 #include "time.h"
-#include "env.h"
+#include <ArduinoJson.h>
 
 
 
@@ -87,6 +87,7 @@ inline bool getWiFiStatus() {
     return true;
   } else {
     Serial.println("\nNo STA WiFi or failed connection, waiting for reset via AP...");
+    delay(100);
     return false;
   }
 }
@@ -146,23 +147,73 @@ struct rtdb_data {
 };
 
 inline rtdb_data GET_DATA() {
-  rtdb_data jsonResp;
+  rtdb_data jsonResp = { "", "", "", "", 0.0, false };  // default
 
   if (Firebase.ready() && fireBaseConnect() == SUCCESS) {
-    if (Firebase.RTDB.getJSON(&fbdo, "feeder_status")) {
-      FirebaseJson &json = fbdo.jsonObject();
-      FirebaseJsonData data;
+    String path = "/feeder_status";
 
-      if (json.get(data, "breakfast_sched")) jsonResp.FB_breakfast = data.stringValue;
-      if (json.get(data, "lunch_sched")) jsonResp.FB_lunch = data.stringValue;
-      if (json.get(data, "dinner_sched")) jsonResp.FB_dinner = data.stringValue;
-      if (json.get(data, "feeding_status")) jsonResp.FB_status = data.stringValue;
-      if (json.get(data, "food_amount")) jsonResp.FB_foodAmount = data.doubleValue;
-      if (json.get(data, "isFeeding")) jsonResp.FB_isFeeding = data.boolValue;
+    String feedingStatus;
+    double foodAmount;
+    bool isFeeding;
+    String breakfast, lunch, dinner;
+
+    // Read values directly from RTDB
+    if (Firebase.RTDB.getString(&fbdo, path + "/feeding_status")) {
+      feedingStatus = fbdo.stringData();
+    } else {
+      Serial.println("Failed to get feeding_status: " + fbdo.errorReason());
     }
+
+    if (Firebase.RTDB.getDouble(&fbdo, path + "/food_amount")) {
+      foodAmount = fbdo.doubleData();
+    } else {
+      Serial.println("Failed to get food_amount: " + fbdo.errorReason());
+    }
+
+    if (Firebase.RTDB.getBool(&fbdo, path + "/isFeeding")) {
+      isFeeding = fbdo.boolData();
+    } else {
+      Serial.println("Failed to get isFeeding: " + fbdo.errorReason());
+    }
+
+    if (Firebase.RTDB.getString(&fbdo, path + "/breakfast_sched")) {
+      breakfast = fbdo.stringData();
+    }
+    if (Firebase.RTDB.getString(&fbdo, path + "/lunch_sched")) {
+      lunch = fbdo.stringData();
+    }
+    if (Firebase.RTDB.getString(&fbdo, path + "/dinner_sched")) {
+      dinner = fbdo.stringData();
+    }
+
+    // Fill struct
+    jsonResp.FB_status = feedingStatus;
+    jsonResp.FB_foodAmount = foodAmount;
+    jsonResp.FB_isFeeding = isFeeding;
+    jsonResp.FB_breakfast = breakfast;
+    jsonResp.FB_lunch = lunch;
+    jsonResp.FB_dinner = dinner;
   }
 
   return jsonResp;
+}
+
+inline void SEND_DATA(rtdb_data &data) {
+  if (Firebase.ready() && fireBaseConnect() == SUCCESS) {
+    String path = "/feeder_status";
+
+    if (!Firebase.RTDB.setString(&fbdo, path + "/feeding_status", data.FB_status)) {
+      Serial.println("Failed to set feeding_status: " + fbdo.errorReason());
+    }
+
+    if (!Firebase.RTDB.setBool(&fbdo, path + "/isFeeding", data.FB_isFeeding)) {
+      Serial.println("Failed to set isFeeding: " + fbdo.errorReason());
+    }
+
+    if (!Firebase.RTDB.setDouble(&fbdo, path + "/food_amount", data.FB_foodAmount)) {
+      Serial.println("Failed to set food_amount: " + fbdo.errorReason());
+    }
+  }
 }
 
 rtdb_data IDLE = {
@@ -179,35 +230,6 @@ rtdb_data FOODREADY = {
   .FB_status = "FOODREADY",
   .FB_isFeeding = true
 };
-
-inline void SEND_DATA(rtdb_data &data) {
-  if (Firebase.ready() && fireBaseConnect() == SUCCESS) {
-    FirebaseJson json;
-    json.set("feeding_status", data.FB_status);  // IDLE , DISPENSING, FOODREADY
-    json.set("isFeeding", data.FB_isFeeding);    // true or false
-
-    /*
-      Can use(set/get):
-      - set
-      - setInt
-      - setFloat
-      - setDouble
-      - setString
-      - setJSON
-      - setArray
-      - setBlob
-      - setFile
-      - updateNode --> for advanced use/to update individual node without affecting other json files
-    */
-    if (Firebase.RTDB.updateNode(&fbdo, "feeder_status", &json)) {
-      Serial.println("Successfully saved at" + fbdo.dataPath());
-      Serial.println("( " + fbdo.dataPath() + " )");
-    } else {
-      Serial.println("Failed: " + fbdo.errorReason());
-    }
-  }
-}
-
 // =========================================================================================================
 // ======================================== FIREBASE CONNECTION ============================================
 // =========================================================================================================

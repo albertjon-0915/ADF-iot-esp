@@ -1,4 +1,4 @@
-#define L298N_PWM 12  // will adjust pin
+#define L298N_PWM 13
 #define LM393_CPM 32  // will adjust pin
 // #define DISABLE_DEBUG
 
@@ -71,9 +71,9 @@ CREATE_ASYNC_FN(GET_dateTime, 15000, assignCurrentTime);
 CREATE_ASYNC_FN(GET_rtdbData, 2000, assignRtdbData);
 
 void setup() {
+  Serial.begin(115200);
   pinMode(L298N_PWM, OUTPUT);
 
-  Serial.begin(115200);
   configTime(GMT, DST, ntpServer);
   WEIGHT_init();
 
@@ -103,27 +103,26 @@ void setup() {
 void loop() {
   server.handleClient();
   asyncDelay(GET_dateTime);
-  asyncDelay(GET_rtdbData);
-  // rtdb_data data = GET_DATA(); // get real time data schedules and other variables
+  // asyncDelay(GET_rtdbData);
 
-  float weight = WEIGHT_getGrams();  // read analog value and convert to grams
-  analogWrite(L298N_PWM, 155);       // control the motor speed, adjust 0-255
+  // float weight = WEIGHT_getGrams();  // read analog value and convert to grams
+  // analogWrite(L298N_PWM, 155);       // control the motor speed, adjust 0-255
 
-  if (TIME_isFeedNow(data)) {
+  // if (TIME_isFeedNow(data)) {
 
-    SEND_DATA(DISPENSING);
-    rotateAction();
+  //   SEND_DATA(DISPENSING);
+  //   rotateAction();
 
-    if (WEIGHT_isStopFeeding(data, weight)) {
-      SEND_DATA(FOODREADY);
-      stopRotateAction();
-      CL_trigger();
-      return;
-    }
-  }
+  //   if (WEIGHT_isStopFeeding(data, weight)) {
+  //     SEND_DATA(FOODREADY);
+  //     stopRotateAction();
+  //     CL_trigger();
+  //     return;
+  //   }
+  // }
 
-  // if the food is already eaten by the pet, update status
-  if (weight < 100) {
-    SEND_DATA(IDLE);
-  }
+  // // if the food is already eaten by the pet, update status
+  // if (weight < 100) {
+  //   SEND_DATA(IDLE);
+  // }
 }
