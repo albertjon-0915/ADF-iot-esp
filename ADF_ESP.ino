@@ -55,6 +55,7 @@ void WIFI_initialize(Wifi& local) {
     while (WiFi.status() != WL_CONNECTED && millis() - start < 10000) {
       delay(500);
       Serial.print(".");
+      yield();  // Add yield here to prevent watchdog reset
     }
   }
 }
@@ -102,12 +103,14 @@ void setup() {
 
 void loop() {
   server.handleClient();
+  yield();  // Add yield after server operations
+  
   asyncDelay(GET_dateTime);
-  // asyncDelay(GET_rtdbData);
-
-  // float weight = WEIGHT_getGrams();  // read analog value and convert to grams
-  // analogWrite(L298N_PWM, 155);       // control the motor speed, adjust 0-255
-
+  yield();  // Add yield after async operations
+  
+  float weight = WEIGHT_getGrams();
+  yield();  // Add yield after sensor readings
+  
   // if (TIME_isFeedNow(data)) {
 
   //   SEND_DATA(DISPENSING);
