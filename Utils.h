@@ -27,21 +27,21 @@ struct DebugClass : public Stream {
 #define Serial debugSerial
 #endif
 
-// Timer struct
+// TTimer struct
 template<typename Func>
-struct Timer {
+struct TTimer {
   unsigned long lastRun = 0;
   unsigned long interval;
   Func callback;
 };
 
 // Helper macro
-#define CREATE_ASYNC_FN(name, interval, func) Timer<decltype(func)*> name{ 0, interval, func };
-#define CREATE_ASYNC_OBJ(name, interval, func) Timer<decltype(func)> name{ 0, interval, func };
+#define CREATE_ASYNC_FN(name, interval, func) TTimer<decltype(func)*> name{ 0, interval, func };
+#define CREATE_ASYNC_OBJ(name, interval, func) TTimer<decltype(func)> name{ 0, interval, func };
 
 // void version
 template<typename Func>
-inline void asyncDelay(Timer<Func>& t, std::enable_if_t<std::is_same_v<decltype(t.callback()), void>, int> = 0) {
+inline void asyncDelay(TTimer<Func>& t, std::enable_if_t<std::is_same_v<decltype(t.callback()), void>, int> = 0) {
   unsigned long now = millis();
   if (now - t.lastRun >= t.interval) {
     t.lastRun = now;
@@ -51,7 +51,7 @@ inline void asyncDelay(Timer<Func>& t, std::enable_if_t<std::is_same_v<decltype(
 
 // non-void version
 template<typename Func>
-inline auto asyncDelay(Timer<Func>& t, std::enable_if_t<!std::is_same_v<decltype(t.callback()), void>, int> = 0) {
+inline auto asyncDelay(TTimer<Func>& t, std::enable_if_t<!std::is_same_v<decltype(t.callback()), void>, int> = 0) {
   unsigned long now = millis();
   if (now - t.lastRun >= t.interval) {
     t.lastRun = now;
