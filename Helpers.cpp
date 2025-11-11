@@ -17,29 +17,6 @@ rtdb_data FOODREADY = {
   .FB_isFeeding = true
 };
 
-
-// ----- WIFI -----
-bool getWiFiStatus() {
-  bool statusCheck = WiFi.status() == WL_CONNECTED;
-
-  if (statusCheck) {
-    Serial.print("STA IP: ");
-    Serial.println(WiFi.localIP());
-
-    return true;
-  } else {
-    unsigned long start = millis();
-    while (statusCheck && millis() - start < 30000) {
-      Serial.println("\nNo STA WiFi or failed connection.");
-      delay(1000);
-      Serial.print(".");
-    }
-
-    getWiFiStatus();
-    return false;
-  }
-}
-
 // ----- CLOUD FUNCTION -----
 response FB_createLog() {
   if (WiFi.status() != WL_CONNECTED) return FAILED;
