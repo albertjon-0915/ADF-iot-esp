@@ -86,7 +86,7 @@ ONOFF &motorControl_1() {
   static Params_onoff params1;
   static ONOFF *inst1 = nullptr;
   if (!initialized) {
-    params1.pin = 17;  // 4
+    params1.pin = MOTOR1_PIN;
     params1.startState = false;
     params1.debug = true;
     inst1 = new ONOFF(params1);
@@ -100,7 +100,7 @@ ONOFF &motorControl_2() {
   static Params_onoff params2;
   static ONOFF *inst2 = nullptr;
   if (!initialized) {
-    params2.pin = 16;  // 5
+    params2.pin = MOTOR2_PIN;
     params2.startState = false;
     params2.debug = true;
     inst2 = new ONOFF(params2);
@@ -123,7 +123,7 @@ void stopRotateAction() {
 
 // ----- WEIGHT -----
 WEIGHT WEIGHT_Data = {
-  .FSR_PIN = 25,  //36
+  .FSR_PIN = FSR_PIN,
   .SAMPLES = 20,
   .ADC_noLoad = 4095.0,
   .ADC_wLoad = 1100.0,

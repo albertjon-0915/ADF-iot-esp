@@ -100,7 +100,7 @@ void firebaseInit() {
 }
 
 static unsigned long lastPoll = 0;
-const unsigned long POLL_MS = 5000; // asynchronous timer
+const unsigned long POLL_MS = 5000;  // asynchronous timer
 
 void firebasePoll() {
   app.loop();

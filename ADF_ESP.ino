@@ -1,4 +1,3 @@
-#define L298N_PWM 13  // 13
 // #define DISABLE_DEBUG
 
 #define ENABLE_USER_AUTH
@@ -24,6 +23,7 @@ rtdb_data data;
 WiFiManager wm;
 
 bool FLAG = false;
+
 // WEIGHT WEIGHT_Data = {
 //   .FSR_PIN = LM393_CPM,
 //   .SAMPLES = 20,
