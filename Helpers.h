@@ -61,6 +61,7 @@ enum response { DONE,
 extern rtdb_data jsonResp;
 extern rtdb_data DISPENSING;
 extern rtdb_data FOODREADY;
+extern rtdb_data IDLE;
 extern String TIME_now;
 extern WEIGHT WEIGHT_Data;
 

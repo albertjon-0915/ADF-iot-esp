@@ -42,7 +42,7 @@ static UIDCode uidToCode(const String &uid) {
 // Local callback that fills the shared globals declared in Helpers.cpp
 void processData(AsyncResult &aResult) {
   if (!aResult.isResult()) return;
-  Serial.println("processing data fetched");
+  // Serial.println("processing data fetched");
 
   if (aResult.isError()) {
     Serial.printf("Firebase error: %s (uid=%s)\n", aResult.error().message().c_str(), aResult.uid().c_str());
@@ -52,7 +52,7 @@ void processData(AsyncResult &aResult) {
 
   String uid = aResult.uid();
   String payload = aResult.c_str();
-  Serial.printf("%s : %s\n", uid.c_str(), payload.c_str());
+  // Serial.printf("%s : %s\n", uid.c_str(), payload.c_str());
   // Strip surrounding quotes for strings
   if (payload.length() >= 2 && payload.startsWith("\"") && payload.endsWith("\"")) {
     payload = payload.substring(1, payload.length() - 1);
@@ -61,15 +61,15 @@ void processData(AsyncResult &aResult) {
   switch (uidToCode(uid)) {
     case U_RTB_STATUS:
       jsonResp.FB_status = payload;
-      Serial.println("FB status -> " + jsonResp.FB_status);
+      // Serial.println("FB status -> " + jsonResp.FB_status);
       break;
     case U_RTB_FOOD:
       jsonResp.FB_foodAmount = payload.toFloat();
-      Serial.printf("FB foodAmount -> %.2f\n", jsonResp.FB_foodAmount);
+      // Serial.printf("FB foodAmount -> %.2f\n", jsonResp.FB_foodAmount);
       break;
     case U_RTB_ISFEEDING:
       jsonResp.FB_isFeeding = (payload == "true" || payload == "1");
-      Serial.printf("FB isFeeding -> %d\n", jsonResp.FB_isFeeding);
+      // Serial.printf("FB isFeeding -> %d\n", jsonResp.FB_isFeeding);
       break;
     case U_RTB_BREAKFAST:
       jsonResp.FB_breakfast = payload;
@@ -101,7 +101,7 @@ void firebaseInit() {
 }
 
 static unsigned long lastPoll = 0;
-const unsigned long POLL_MS = 2000;
+const unsigned long POLL_MS = 5000;
 
 void firebasePoll() {
   app.loop();
@@ -121,7 +121,14 @@ void firebasePoll() {
 }
 
 void firebaseSendStatus(const rtdb_data &d) {
+  app.loop();
+
   if (!app.ready()) return;
+  Serial.print(d.FB_status);
+  Serial.print(" : ");
+  Serial.print(d.FB_isFeeding);
+  Serial.print(" -> ");
+  Serial.println("sending data to rtdb");
   // Async set calls (no callback provided here)
   Database.set<String>(aClient, "/feeder_status/feeding_status", d.FB_status, nullptr, "US");
   Database.set<bool>(aClient, "/feeder_status/isFeeding", d.FB_isFeeding, nullptr, "UI");

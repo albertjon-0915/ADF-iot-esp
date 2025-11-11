@@ -20,13 +20,22 @@ rtdb_data FOODREADY = {
 
 // ----- WIFI -----
 bool getWiFiStatus() {
-  if (WiFi.status() == WL_CONNECTED) {
+  bool statusCheck = WiFi.status() == WL_CONNECTED;
+
+  if (statusCheck) {
     Serial.print("STA IP: ");
     Serial.println(WiFi.localIP());
+
     return true;
   } else {
-    Serial.println("\nNo STA WiFi or failed connection.");
-    delay(100);
+    unsigned long start = millis();
+    while (statusCheck && millis() - start < 30000) {
+      Serial.println("\nNo STA WiFi or failed connection.");
+      delay(1000);
+      Serial.print(".");
+    }
+
+    getWiFiStatus();
     return false;
   }
 }
@@ -156,7 +165,7 @@ ONOFF &motorControl_1() {
   static Params_onoff params1;
   static ONOFF *inst1 = nullptr;
   if (!initialized) {
-    params1.pin = 4; // 4
+    params1.pin = 17;  // 4
     params1.startState = false;
     params1.debug = true;
     inst1 = new ONOFF(params1);
@@ -170,7 +179,7 @@ ONOFF &motorControl_2() {
   static Params_onoff params2;
   static ONOFF *inst2 = nullptr;
   if (!initialized) {
-    params2.pin = 5; // 5
+    params2.pin = 16;  // 5
     params2.startState = false;
     params2.debug = true;
     inst2 = new ONOFF(params2);
@@ -193,12 +202,12 @@ void stopRotateAction() {
 
 // ----- WEIGHT -----
 WEIGHT WEIGHT_Data = {
-  .FSR_PIN = 2, //36
+  .FSR_PIN = 25,  //36
   .SAMPLES = 20,
-  .ADC_noLoad = 0.0,
-  .ADC_wLoad = 0.0,
+  .ADC_noLoad = 4095.0,
+  .ADC_wLoad = 1100.0,
   .WEIGHT_noLoad = 0.0,
-  .WEIGHT_wLoad = 0.0,
+  .WEIGHT_wLoad = 400.0,
   .TARE_offset = 0.0
 };
 
@@ -221,11 +230,13 @@ float WEIGHT_getGrams() {
   int raw = WEIGHT_read();
   float grams = slope * (raw - WEIGHT_Data.ADC_noLoad) + WEIGHT_Data.WEIGHT_noLoad;
   grams -= WEIGHT_Data.TARE_offset;
-  if (grams < 0.0) grams = 0.0;
-  Serial.print("ADC: ");
-  Serial.print(raw);
-  Serial.print("  →  Weight (g): ");
-  Serial.println(grams, 1);
+  if (grams < 10.0) grams = 0.0;
+  else {
+    Serial.print("ADC: ");
+    Serial.print(raw);
+    Serial.print("  →  Weight (g): ");
+    Serial.println(grams, 1);
+  }
   return grams;
 }
 

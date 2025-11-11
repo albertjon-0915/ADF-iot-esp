@@ -1,4 +1,4 @@
-#define L298N_PWM 6 //13
+#define L298N_PWM 13  //13
 // #define LM393_CPM 34  // will adjust pin
 // #define DISABLE_DEBUG
 
@@ -29,6 +29,7 @@ const int PWM_resolution = 8;
 
 rtdb_data data;
 
+bool FLAG = false;
 // WEIGHT WEIGHT_Data = {
 //   .FSR_PIN = LM393_CPM,
 //   .SAMPLES = 20,
@@ -47,7 +48,20 @@ void assignCurrentTime() {
 //   data = GET_DATA();
 // }
 
-CREATE_ASYNC_FN(GET_dateTime, 15000, assignCurrentTime);
+void updateRtdbDispensing() {
+  firebaseSendStatus(DISPENSING);
+}
+void updateRtdbFReady() {
+  firebaseSendStatus(FOODREADY);
+}
+void updateRtdbIdle() {
+  firebaseSendStatus(IDLE);
+}
+
+CREATE_ASYNC_FN(GET_dateTime, 5000, assignCurrentTime);
+CREATE_ASYNC_FN(POST_Dispensing, 12000, updateRtdbDispensing);
+CREATE_ASYNC_FN(POST_FReady, 8000, updateRtdbFReady);
+CREATE_ASYNC_FN(POST_Idle, 12000, updateRtdbIdle);
 // CREATE_ASYNC_FN(GET_rtdbData, 2000, assignRtdbData);
 
 void setup() {
@@ -76,12 +90,12 @@ void setup() {
   Serial.print("Connecting to STA WiFi...\n");
   WiFi.begin(STA_SSID, STA_PSK);
   unsigned long start = millis();
-  while (WiFi.status() != WL_CONNECTED && millis() - start < 10000) {
+  while (WiFi.status() != WL_CONNECTED && millis() - start < 300000) {
     delay(500);
     Serial.print(".");
   }
-  // getWiFiStatus();
 
+  // getWiFiStatus();
   firebaseInit();
 
   // removed WebServer setup
@@ -92,16 +106,50 @@ void setup() {
 }
 
 void loop() {
+  if (WiFi.status() != WL_CONNECTED) {
+    WiFi.begin(STA_SSID, STA_PSK);
+  }
+  unsigned long start = millis();
+  while (WiFi.status() != WL_CONNECTED && millis() - start < 10000) {
+    delay(500);
+    Serial.print(".");
+  }
   // removed server.handleClient();
   asyncDelay(GET_dateTime);
   // asyncDelay(GET_rtdbData);
 
   // set duty using Arduino wrapper (0 .. 2^PWM_resolution - 1)
   ledcWrite(PWM_channel, 155);
-  // float weight = WEIGHT_getGrams();  // read analog value and convert to grams
+  float weight = WEIGHT_getGrams();  // read analog value and convert to grams
   // uint32_t duty = 155; // 0..2^PWM_resolution-1
   // ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, duty);
   // ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0);
+
+  firebasePoll();
+
+  if (TIME_isFeedNow(jsonResp)) {
+    // FLAG = true;
+    Serial.println("aalkfakfjas");
+  }
+
+  while (FLAG == true) {
+    asyncDelay(POST_Dispensing);
+    rotateAction();
+
+    if (WEIGHT_isStopFeeding(data, weight)) {
+      firebaseSendStatus(FOODREADY);
+      stopRotateAction();
+      CL_trigger();
+      FLAG = false;
+      return;
+    }
+  }
+
+  // if the food is already eaten by the pet, update status
+  if (weight < 100) {
+    asyncDelay(POST_Idle);
+  }
+
 
   // if (TIME_isFeedNow(data)) {
 
@@ -116,13 +164,20 @@ void loop() {
   //   }
   // }
 
-  // // if the food is already eaten by the pet, update status
-  // if (weight < 100) {
-  //   SEND_DATA(IDLE);
-  // }
 
   // app.loop();
   // // Check if authentication is ready
   // if (app.ready()) {}
-  firebasePoll(); 
+  // firebasePoll();
+  // delay(2000);
+
+  // asyncDelay(POST_Dispensing);
+  // asyncDelay(POST_FReady);
+  // asyncDelay(POST_Idle);
+
+  // firebaseSendStatus(DISPENSING);
+  // delay(5000);
+  // firebaseSendStatus(FOODREADY);
+  // delay(5000);
+  // firebaseSendStatus(IDLE);
 }
