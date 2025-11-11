@@ -17,7 +17,7 @@ FirebaseApp app;
 WiFiClientSecure ssl_client;
 using AsyncClient = AsyncClientClass;
 AsyncClient aClient(ssl_client);
-RealtimeDatabase Database;  // Ensure RealtimeDatabase is properly declared
+RealtimeDatabase Database;
 
 enum UIDCode {
   U_RTB_STATUS,
@@ -39,7 +39,7 @@ static UIDCode uidToCode(const String &uid) {
   return U_UNKNOWN;
 }
 
-// Local callback that fills the shared globals declared in Helpers.cpp
+// Callback
 void processData(AsyncResult &aResult) {
   if (!aResult.isResult()) return;
   // Serial.println("processing data fetched");
@@ -52,7 +52,6 @@ void processData(AsyncResult &aResult) {
 
   String uid = aResult.uid();
   String payload = aResult.c_str();
-  // Serial.printf("%s : %s\n", uid.c_str(), payload.c_str());
   // Strip surrounding quotes for strings
   if (payload.length() >= 2 && payload.startsWith("\"") && payload.endsWith("\"")) {
     payload = payload.substring(1, payload.length() - 1);
@@ -95,13 +94,13 @@ void firebaseInit() {
   ssl_client.setHandshakeTimeout(5);
 
   initializeApp(aClient, app, getAuth(user_auth), processData, "authTask");
-  app.getApp<RealtimeDatabase>(Database);  // Corrected initialization
+  app.getApp<RealtimeDatabase>(Database);
   Database.url(FIREBASE_DB_URL);
   Serial.println("FirebaseClient initialization requested");
 }
 
 static unsigned long lastPoll = 0;
-const unsigned long POLL_MS = 5000;
+const unsigned long POLL_MS = 5000; // asynchronous timer
 
 void firebasePoll() {
   app.loop();
@@ -129,7 +128,8 @@ void firebaseSendStatus(const rtdb_data &d) {
   Serial.print(d.FB_isFeeding);
   Serial.print(" -> ");
   Serial.println("sending data to rtdb");
-  // Async set calls (no callback provided here)
+
+  // Async set calls (no callback provided here) -> nullptr
   Database.set<String>(aClient, "/feeder_status/feeding_status", d.FB_status, nullptr, "US");
   Database.set<bool>(aClient, "/feeder_status/isFeeding", d.FB_isFeeding, nullptr, "UI");
 }

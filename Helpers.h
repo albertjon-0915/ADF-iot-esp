@@ -4,29 +4,17 @@
 #include "env.h"
 #include "ONOFF.h"
 #include <HTTPClient.h>
-// #include <Firebase_ESP_Client.h>
-// #include <FirebaseClient.h>
-// #include <WiFiClientSecure.h>
-// #include "addons/TokenHelper.h"
-// #include "addons/RTDBHelper.h"
 #include "time.h"
 #include <WiFi.h>
 
 struct rtdb_data;
 struct WEIGHT;
 
-// #define ENABLE_USER_AUTH
-// #define ENABLE_DATABASE
 
-// using AsyncClient = AsyncClientClass;
 void firebaseInit();                          // call after WiFi connected
 void firebasePoll();                          // call regularly from loop()
 void firebaseSendStatus(const rtdb_data &d);  // send status update to RTDB
 
-// Globals defined in Helpers.cpp
-// extern FirebaseData fbdo;
-// extern FirebaseAuth auth;
-// extern FirebaseConfig config;
 
 struct Wifi {
   String ssid;

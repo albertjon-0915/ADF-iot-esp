@@ -8,7 +8,5 @@ extern const char* AUTH_EMAIL;
 extern const char* AUTH_PASS;
 extern const char* AP_SSID;
 extern const char* AP_PSK;
-extern const char* STA_SSID;
-extern const char* STA_PSK;
 
 #endif  // ENV_H

@@ -1,7 +1,6 @@
 #include "Helpers.h"
 
-// ----- globals -----
-// removed Preferences prefs; persistence removed
+
 
 rtdb_data IDLE = {
   .FB_status = "IDLE",
@@ -17,6 +16,7 @@ rtdb_data FOODREADY = {
   .FB_status = "FOODREADY",
   .FB_isFeeding = true
 };
+
 
 // ----- WIFI -----
 bool getWiFiStatus() {
@@ -39,85 +39,6 @@ bool getWiFiStatus() {
     return false;
   }
 }
-
-// // ----- FIREBASE -----
-// ssl_client.setInsecure();
-// ssl_client.setConnectionTimeout(1000);
-// ssl_client.setHandshakeTimeout(5);
-// initializeApp(aClient, app, getAuth(user_auth), processData, "🔐 authTask");
-// app.getApp<RealtimeDatabase>(Database);
-// Database.url(FIREBASE_DB_URL);
-
-
-// rtdb_data GET_DATA() {
-//   rtdb_data jsonResp = { "", "", "", "", 0.0, false };
-//   Database.get(aClient, "/feeder_status/breakfast_sched", GET_processData, false, "BF");
-//   Database.get(aClient, "/feeder_status/lunch_sched", GET_processData, false, "LH");
-//   Database.get(aClient, "/feeder_status/dinner_sched", GET_processData, false, "DR");
-//   Database.get(aClient, "/feeder_status/feeding_status", GET_processData, false, "FS");
-//   Database.get(aClient, "/feeder_status/feed_amount", GET_processData, false, "FA");
-//   Database.get(aClient, "/feeder_status/isFeeding", GET_processData, false, "IF");
-
-//   void GET_processData() {
-//     if (!aResult.isResult())
-//       return;
-
-//     if (aResult.isEvent())
-//       Firebase.printf("Event task: %s, msg: %s, code: %d\n", aResult.uid().c_str(), aResult.eventLog().message().c_str(), aResult.eventLog().code());
-//     if (aResult.isDebug())
-//       Firebase.printf("Debug task: %s, msg: %s\n", aResult.uid().c_str(), aResult.debug().c_str());
-//     if (aResult.isError())
-//       Firebase.printf("Error task: %s, msg: %s, code: %d\n", aResult.uid().c_str(), aResult.error().message().c_str(), aResult.error().code());
-
-//     if (aResult.available()) {
-//       Firebase.printf("task: %s, payload: %s\n", aResult.uid().c_str(), aResult.c_str());
-
-//       String payload = aResult.c_str();
-
-//       switch (aResult.uid()) {
-//         case 'BF':  // BF
-//           jsonResp.FB_breakfast = payload;
-//           break;
-//         case 'LH':  // LH
-//           jsonResp.FB_lunch = payload;
-//           break;
-//         case 'DR':  // DR
-//           jsonResp.FB_dinner = payload;
-//           break;
-//         case 'FS':  // FS
-//           jsonResp.FB_status = payload;
-//           break;
-//         case 'FA':  // FA
-//           jsonResp.FB_foodAmount = payload.toDouble();
-//           break;
-//         case 'IF':  // IF
-//           jsonResp.FB_isFeeding = (payload == "true");
-//           break;
-//       }
-//     }
-//   }
-
-//   return jsonResp;
-// }
-
-// void SEND_DATA(rtdb_data &data) {
-//   Database.set<String>(aClient, "/feeder_status/feeding_status", data.FB_status, processData, "US");
-//   Database.set<bool>(aClient, "/feeder_status/isFeeding", data.FB_isFeeding, processData, "UI");
-// }
-
-//   void processData(AsyncResult & aResult) {
-//     if (!aResult.isResult())
-//       return;
-
-//     if (aResult.isEvent())
-//       Firebase.printf("Event task: %s, msg: %s, code: %d\n", aResult.uid().c_str(), aResult.eventLog().message().c_str(), aResult.eventLog().code());
-//     if (aResult.isDebug())
-//       Firebase.printf("Debug task: %s, msg: %s\n", aResult.uid().c_str(), aResult.debug().c_str());
-//     if (aResult.isError())
-//       Firebase.printf("Error task: %s, msg: %s, code: %d\n", aResult.uid().c_str(), aResult.error().message().c_str(), aResult.error().code());
-//     if (aResult.available())
-//       Firebase.printf("task: %s, payload: %s\n", aResult.uid().c_str(), aResult.c_str());
-//   }
 
 // ----- CLOUD FUNCTION -----
 response FB_createLog() {
