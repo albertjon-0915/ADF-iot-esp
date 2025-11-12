@@ -28,6 +28,7 @@ void firebasePoll();                          // call regularly from loop()
 void firebaseSendStatus(const rtdb_data &d);  // send status update to RTDB
 
 
+
 struct Wifi {
   String ssid;
   String pass;
@@ -58,12 +59,18 @@ enum CON_STATUS { INVALID_CREDS,
 enum response { DONE,
                 FAILED };
 
+enum MOTOR {
+  SLEEP,
+  RUNNING,
+};
+
 extern rtdb_data jsonResp;
 extern rtdb_data DISPENSING;
 extern rtdb_data FOODREADY;
 extern rtdb_data IDLE;
 extern String TIME_now;
 extern WEIGHT WEIGHT_Data;
+extern MOTOR MOTOR_state;
 
 ONOFF &motorControl_1();
 ONOFF &motorControl_2();

@@ -1,6 +1,6 @@
 #include "Helpers.h"
 
-
+MOTOR MOTOR_state = SLEEP;
 
 rtdb_data IDLE = {
   .FB_status = "IDLE",
@@ -87,15 +87,17 @@ ONOFF &motorControl_2() {
 }
 
 void rotateAction() {
-  Serial.println("Rotating motor...");
+  if (MOTOR_state != RUNNING) Serial.println("Rotating motor...");
   motorControl_1().on();
   motorControl_2().off();
+  MOTOR_state = RUNNING;
 }
 
 void stopRotateAction() {
-  Serial.println("Stopping motor...");
+  if (MOTOR_state != SLEEP) Serial.println("Stopping motor...");
   motorControl_1().off();
   motorControl_2().off();
+  MOTOR_state = SLEEP;
 }
 
 // ----- WEIGHT -----
@@ -142,8 +144,8 @@ bool WEIGHT_isStopFeeding(rtdb_data &food_amount, float current_weight) {
   double rtdb_weight = food_amount.FB_foodAmount;
   return (rtdb_weight < current_weight);
 }
-// ----- WEIGHT -----
 
+// ----- MANUAL FEED -----
 bool STATUS_isFeedNow(rtdb_data &status) {
   if (status.FB_isFeeding == true && status.FB_status == "DISPENSING") return true;
   if (status.FB_isFeeding == true && status.FB_status == "FOODREADY") return true;

@@ -84,7 +84,7 @@ void loop() {
     Serial.println("via TIME: Feed time !!!");
   }
 
-  if(STATUS_isFeedNow(jsonResp)) {
+  if (STATUS_isFeedNow(jsonResp)) {
     FLAG_feed = true;
     Serial.println("via MANUAL: Feeding time !!!");
   }
@@ -93,7 +93,7 @@ void loop() {
     asyncDelay(POST_Dispensing);
     rotateAction();
     weight = WEIGHT_getGrams();
-    yield(); // add a little pause for background tasks
+    yield();  // add a little pause for background tasks
 
     if (WEIGHT_isStopFeeding(data, weight)) {
       FLAG_stop = true;
