@@ -22,7 +22,8 @@ const int PWM_resolution = 8;
 rtdb_data data;
 WiFiManager wm;
 
-bool FLAG = false;
+bool FLAG_feed = false;
+bool FLAG_stop = false;
 
 // WEIGHT WEIGHT_Data = {
 //   .FSR_PIN = LM393_CPM,
@@ -79,31 +80,35 @@ void loop() {
   firebasePoll();
 
   if (TIME_isFeedNow(jsonResp)) {
-    FLAG = true;
+    FLAG_feed = true;
     Serial.println("via TIME: Feed time !!!");
   }
 
   if(STATUS_isFeedNow(jsonResp)) {
-    FLAG = true;
+    FLAG_feed = true;
     Serial.println("via MANUAL: Feeding time !!!");
-    
   }
 
-  while (FLAG == true) {
+  while (FLAG_feed == true && FLAG_stop == false) {
     asyncDelay(POST_Dispensing);
     rotateAction();
+    weight = WEIGHT_getGrams();
+    yield(); // add a little pause for background tasks
 
     if (WEIGHT_isStopFeeding(data, weight)) {
+      FLAG_stop = true;
+      Serial.println("Stopping feed: Target reached");
       firebaseSendStatus(FOODREADY);
       stopRotateAction();
       CL_trigger();
-      FLAG = false;
+      FLAG_feed = false;
       return;
     }
   }
 
   // if the food is already eaten by the pet, update status
   if (weight < 100) {
+    FLAG_stop = false;
     asyncDelay(POST_Idle);
   }
 }
