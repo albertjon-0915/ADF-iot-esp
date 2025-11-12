@@ -7,11 +7,17 @@
 #include "time.h"
 #include <WiFi.h>
 
-
+// *NOTE: uncomment for esp32 30/38 pin configuration
 static constexpr uint8_t L298N_PWM = 13;
 static constexpr uint8_t FSR_PIN = 25;
 static constexpr uint8_t MOTOR1_PIN = 17;
 static constexpr uint8_t MOTOR2_PIN = 16;
+
+// *NOTE: uncomment for esp32c3 super mini pin configuration
+// static constexpr uint8_t L298N_PWM = 6;
+// static constexpr uint8_t FSR_PIN = 2;
+// static constexpr uint8_t MOTOR1_PIN = 4;
+// static constexpr uint8_t MOTOR2_PIN = 5;
 
 struct rtdb_data;
 struct WEIGHT;
