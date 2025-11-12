@@ -81,6 +81,7 @@ int WEIGHT_read();
 float WEIGHT_getGrams();
 bool getWiFiStatus();
 bool TIME_isFeedNow(rtdb_data &sched);
+bool STATUS_isFeedNow(rtdb_data &status);
 bool WEIGHT_isStopFeeding(rtdb_data &food_amount, float current_weight);
 
 #endif  // HELPERS_H

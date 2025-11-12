@@ -65,7 +65,7 @@ void setup() {
   bool res = wm.autoConnect("espGo");  // anonymous ap
 
   if (!res) Serial.println("Failed to connect");
-  else Serial.println("Connected to network !!!)");
+  else Serial.println("Connected to network !!!");
 
   firebaseInit();
 }
@@ -80,7 +80,13 @@ void loop() {
 
   if (TIME_isFeedNow(jsonResp)) {
     FLAG = true;
-    Serial.println("Feed time !!!");
+    Serial.println("via TIME: Feed time !!!");
+  }
+
+  if(STATUS_isFeedNow(jsonResp)) {
+    FLAG = true;
+    Serial.println("via MANUAL: Feeding time !!!");
+    
   }
 
   while (FLAG == true) {

@@ -142,3 +142,10 @@ bool WEIGHT_isStopFeeding(rtdb_data &food_amount, float current_weight) {
   double rtdb_weight = food_amount.FB_foodAmount;
   return (rtdb_weight < current_weight);
 }
+// ----- WEIGHT -----
+
+bool STATUS_isFeedNow(rtdb_data &status) {
+  if (status.FB_isFeeding == true && status.FB_status == "DISPENSING") return true;
+  if (status.FB_isFeeding == true && status.FB_status == "FOODREADY") return true;
+  return false;
+}
