@@ -99,16 +99,16 @@ void firebaseInit() {
   Serial.println("FirebaseClient initialization requested");
 }
 
-static unsigned long lastPoll = 0;
-const unsigned long POLL_MS = 5000;  // asynchronous timer
+// static unsigned long lastPoll = 0;
+// const unsigned long POLL_MS = 5000;  // asynchronous timer
 
 void firebasePoll() {
   app.loop();
 
   if (!app.ready()) return;
-  unsigned long now = millis();
-  if (now - lastPoll < POLL_MS) return;
-  lastPoll = now;
+  // unsigned long now = millis();
+  // if (now - lastPoll < POLL_MS) return;
+  // lastPoll = now;
 
   // Async gets — callback will update globals
   Database.get(aClient, "/feeder_status/feeding_status", processData, false, "rtb_status");

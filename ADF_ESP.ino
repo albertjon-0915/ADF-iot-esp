@@ -53,9 +53,10 @@ void updateRtdbIdle() {
 }
 
 CREATE_ASYNC_FN(GET_dateTime, 5000, assignCurrentTime);
-CREATE_ASYNC_FN(POST_Dispensing, 12000, updateRtdbDispensing);
-CREATE_ASYNC_FN(POST_FReady, 8000, updateRtdbFReady);
-CREATE_ASYNC_FN(POST_Idle, 12000, updateRtdbIdle);
+CREATE_ASYNC_FN(GET_Poll, 5000, firebasePoll);
+// CREATE_ASYNC_FN(POST_Dispensing, 12000, updateRtdbDispensing);
+// CREATE_ASYNC_FN(POST_FReady, 8000, updateRtdbFReady);
+// CREATE_ASYNC_FN(POST_Idle, 12000, updateRtdbIdle);
 
 void setup() {
   Serial.begin(115200);
@@ -77,14 +78,17 @@ void setup() {
 void loop() {
   ledcWrite(PWM_channel, 255);
 
+  asyncDelay(GET_dateTime);
+  asyncDelay(GET_Poll);
+  // firebasePoll();
+
+
   bool TIME_ISFEED;
   bool STATUS_ISFEED;
-  asyncDelay(GET_dateTime);
   float weight = WEIGHT_getGrams();  // read analog value and convert to grams
   STATUS_ISFEED = STATUS_isFeedNow(jsonResp);
   TIME_ISFEED = TIME_isFeedNow(jsonResp);
 
-  firebasePoll();
 
   if (TIME_ISFEED || STATUS_ISFEED && !FLAG_lock) FLAG_feed = true;
   if (TIME_ISFEED && !FLAG_update) { FLAG_update = true; firebaseSendStatus(DISPENSING); }
