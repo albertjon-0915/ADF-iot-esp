@@ -127,6 +127,7 @@ int WEIGHT_read() {
 }
 
 float WEIGHT_getGrams() {
+  WEIGHT_init();
   int raw = WEIGHT_read();
   float grams = slope * (raw - WEIGHT_Data.ADC_noLoad) + WEIGHT_Data.WEIGHT_noLoad;
   grams -= WEIGHT_Data.TARE_offset;
@@ -142,12 +143,15 @@ float WEIGHT_getGrams() {
 
 bool WEIGHT_isStopFeeding(rtdb_data &food_amount, float current_weight) {
   double rtdb_weight = food_amount.FB_foodAmount;
+  Serial.print(rtdb_weight);
+  Serial.print(" : ");
+  Serial.println(rtdb_weight < current_weight);
   return (rtdb_weight < current_weight);
 }
 
 // ----- MANUAL FEED -----
 bool STATUS_isFeedNow(rtdb_data &status) {
   if (status.FB_isFeeding == true && status.FB_status == "DISPENSING") return true;
-  if (status.FB_isFeeding == true && status.FB_status == "FOODREADY") return true;
+  // if (status.FB_isFeeding == true && status.FB_status == "FOODREADY") return true;
   return false;
 }

@@ -24,6 +24,9 @@ WiFiManager wm;
 
 bool FLAG_feed = false;
 bool FLAG_stop = false;
+bool FLAG_update = false;
+bool FLAG_complete = false;
+bool FLAG_lock = false;
 
 // WEIGHT WEIGHT_Data = {
 //   .FSR_PIN = LM393_CPM,
@@ -36,7 +39,7 @@ bool FLAG_stop = false;
 
 void assignCurrentTime() {
   TIME_now = getCurrentTime();
-  Serial.println(TIME_now);
+  // Serial.println(TIME_now);
 }
 
 void updateRtdbDispensing() {
@@ -72,43 +75,56 @@ void setup() {
 }
 
 void loop() {
-  asyncDelay(GET_dateTime);
+  ledcWrite(PWM_channel, 255);
 
-  ledcWrite(PWM_channel, 155);
+  bool TIME_ISFEED;
+  bool STATUS_ISFEED;
+  asyncDelay(GET_dateTime);
   float weight = WEIGHT_getGrams();  // read analog value and convert to grams
+  STATUS_ISFEED = STATUS_isFeedNow(jsonResp);
+  TIME_ISFEED = TIME_isFeedNow(jsonResp);
 
   firebasePoll();
 
-  if (TIME_isFeedNow(jsonResp)) {
-    FLAG_feed = true;
-    Serial.println("via TIME: Feed time !!!");
-  }
+  if (TIME_ISFEED || STATUS_ISFEED && !FLAG_lock) FLAG_feed = true;
+  if (TIME_ISFEED && !FLAG_update) { FLAG_update = true; firebaseSendStatus(DISPENSING); }
 
-  if (STATUS_isFeedNow(jsonResp)) {
-    FLAG_feed = true;
-    Serial.println("via MANUAL: Feeding time !!!");
-  }
 
-  while (FLAG_feed == true && FLAG_stop == false) {
-    asyncDelay(POST_Dispensing);
+  if (FLAG_feed == true) {
+    Serial.println("FIRST STAGE");
+
+    if (TIME_ISFEED) Serial.println("via TIME: Feed time !!!");
+    if (STATUS_ISFEED) Serial.println("via MANUAL: Feeding time !!!");
+
     rotateAction();
-    weight = WEIGHT_getGrams();
-    yield();  // add a little pause for background tasks
+    FLAG_feed = false;  // close the 1st stage
+    FLAG_stop = true;   // unlock the 2nd stage
+    FLAG_lock = true;   // finish cycle before feeding again
+  }
 
-    if (WEIGHT_isStopFeeding(data, weight)) {
-      FLAG_stop = true;
-      Serial.println("Stopping feed: Target reached");
-      firebaseSendStatus(FOODREADY);
+  if (FLAG_stop == true) {
+    Serial.println("SECOND STAGE");
+
+    if (WEIGHT_isStopFeeding(jsonResp, weight)) {
       stopRotateAction();
-      CL_trigger();
-      FLAG_feed = false;
-      return;
+      FLAG_stop = false;              // close the 2nd stage
+      FLAG_complete = true;           //  unlock the final stage
+      firebaseSendStatus(FOODREADY);  // update to foodready
     }
+    return;
   }
 
-  // if the food is already eaten by the pet, update status
-  if (weight < 100) {
-    FLAG_stop = false;
-    asyncDelay(POST_Idle);
+  if (FLAG_complete == true) {
+    Serial.println("FINAL STAGE");
+
+    if (weight <= 100) {
+      FLAG_update = false;       // lift the update lock on dispensing
+      FLAG_complete = false;     // close the final stage
+      FLAG_lock = false;         // release the cycle lock
+      firebaseSendStatus(IDLE);  // update to IDLE
+    }
+    return;
   }
+
+  delay(50);
 }

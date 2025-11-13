@@ -60,7 +60,7 @@ void processData(AsyncResult &aResult) {
   switch (uidToCode(uid)) {
     case U_RTB_STATUS:
       jsonResp.FB_status = payload;
-      // Serial.println("FB status -> " + jsonResp.FB_status);
+      Serial.println("FB status -> " + jsonResp.FB_status);
       break;
     case U_RTB_FOOD:
       jsonResp.FB_foodAmount = payload.toFloat();
@@ -68,19 +68,19 @@ void processData(AsyncResult &aResult) {
       break;
     case U_RTB_ISFEEDING:
       jsonResp.FB_isFeeding = (payload == "true" || payload == "1");
-      // Serial.printf("FB isFeeding -> %d\n", jsonResp.FB_isFeeding);
+      Serial.printf("FB isFeeding -> %d\n", jsonResp.FB_isFeeding);
       break;
     case U_RTB_BREAKFAST:
       jsonResp.FB_breakfast = payload;
-      Serial.println("FB breakfast -> " + jsonResp.FB_breakfast);
+      // Serial.println("FB breakfast -> " + jsonResp.FB_breakfast);
       break;
     case U_RTB_LUNCH:
       jsonResp.FB_lunch = payload;
-      Serial.println("FB lunch -> " + jsonResp.FB_lunch);
+      // Serial.println("FB lunch -> " + jsonResp.FB_lunch);
       break;
     case U_RTB_DINNER:
       jsonResp.FB_dinner = payload;
-      Serial.println("FB dinner -> " + jsonResp.FB_dinner);
+      // Serial.println("FB dinner -> " + jsonResp.FB_dinner);
       break;
     default:
       Serial.printf("Unhandled UID: %s payload: %s\n", uid.c_str(), payload.c_str());

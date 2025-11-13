@@ -9,7 +9,7 @@
 
 // *NOTE: uncomment for esp32 30/38 pin configuration
 static constexpr uint8_t L298N_PWM = 13;
-static constexpr uint8_t FSR_PIN = 25;
+static constexpr uint8_t FSR_PIN = 32;
 static constexpr uint8_t MOTOR1_PIN = 17;
 static constexpr uint8_t MOTOR2_PIN = 16;
 
