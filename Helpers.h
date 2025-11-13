@@ -64,6 +64,12 @@ enum MOTOR {
   RUNNING,
 };
 
+enum STAGE {
+FIRST,
+SECOND,
+FINAL
+};
+
 extern rtdb_data jsonResp;
 extern rtdb_data DISPENSING;
 extern rtdb_data FOODREADY;

@@ -28,6 +28,7 @@ bool FLAG_update = false;
 bool FLAG_complete = false;
 bool FLAG_lock = false;
 
+
 // WEIGHT WEIGHT_Data = {
 //   .FSR_PIN = LM393_CPM,
 //   .SAMPLES = 20,
@@ -37,9 +38,25 @@ bool FLAG_lock = false;
 //   .WEIGHT_wLoad = 400.0
 // };
 
+void UPDATE(STAGE stage) {
+    rtdb_data *d; // this is a pointer
+    // use & (if you rebind later)
+    switch (stage) {
+      case FIRST: d = &DISPENSING; break;
+      case SECOND: d = &FOODREADY; break; 
+      case FINAL: d = &IDLE; break;
+    }
+
+    // send it 3 times incase of failure
+    for(int i = 0; i < 3; i++){
+      firebaseSendStatus(*d);
+      delay(200);
+    }
+}
+
 void assignCurrentTime() {
   TIME_now = getCurrentTime();
-  // Serial.println(TIME_now);
+  Serial.println(TIME_now);
 }
 
 void updateRtdbDispensing() {
@@ -91,7 +108,7 @@ void loop() {
 
 
   if (TIME_ISFEED || STATUS_ISFEED && !FLAG_lock) FLAG_feed = true;
-  if (TIME_ISFEED && !FLAG_update) { FLAG_update = true; firebaseSendStatus(DISPENSING); }
+  if (TIME_ISFEED && !FLAG_update) { FLAG_update = true; UPDATE(FIRST); }
 
 
   if (FLAG_feed == true) {
@@ -113,7 +130,8 @@ void loop() {
       stopRotateAction();
       FLAG_stop = false;              // close the 2nd stage
       FLAG_complete = true;           //  unlock the final stage
-      firebaseSendStatus(FOODREADY);  // update to foodready
+      // firebaseSendStatus(FOODREADY);  // update to foodready
+      UPDATE(SECOND); // update to foodready
     }
     return;
   }
@@ -125,7 +143,8 @@ void loop() {
       FLAG_update = false;       // lift the update lock on dispensing
       FLAG_complete = false;     // close the final stage
       FLAG_lock = false;         // release the cycle lock
-      firebaseSendStatus(IDLE);  // update to IDLE
+      // firebaseSendStatus(IDLE);  // update to IDLE
+      UPDATE(FINAL); // update to IDLE
     }
     return;
   }
