@@ -54,7 +54,6 @@ void updateRtdbIdle() {
 }
 
 CREATE_ASYNC_FN(GET_dateTime, 5000, assignCurrentTime);
-CREATE_ASYNC_FN(GET_Poll, 5000, firebasePoll);
 // CREATE_ASYNC_FN(POST_Dispensing, 12000, updateRtdbDispensing);
 // CREATE_ASYNC_FN(POST_FReady, 8000, updateRtdbFReady);
 // CREATE_ASYNC_FN(POST_Idle, 12000, updateRtdbIdle);
@@ -79,9 +78,8 @@ void setup() {
 void loop() {
   ledcWrite(PWM_channel, 255);
 
+  firebasePoll();
   asyncDelay(GET_dateTime);
-  asyncDelay(GET_Poll);
-  // firebasePoll();
 
 
   bool TIME_ISFEED;
