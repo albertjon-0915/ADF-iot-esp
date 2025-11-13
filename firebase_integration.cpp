@@ -42,7 +42,7 @@ static UIDCode uidToCode(const String &uid) {
 // Callback
 void processData(AsyncResult &aResult) {
   if (!aResult.isResult()) return;
-  Serial.println("processing data fetched");
+  // Serial.println("processing data fetched");
 
   if (aResult.isError()) {
     Serial.printf("Firebase error: %s (uid=%s)\n", aResult.error().message().c_str(), aResult.uid().c_str());
