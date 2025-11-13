@@ -65,9 +65,9 @@ enum MOTOR {
 };
 
 enum STAGE {
-FIRST,
-SECOND,
-FINAL
+  FIRST,
+  SECOND,
+  FINAL
 };
 
 extern rtdb_data jsonResp;
@@ -90,6 +90,7 @@ void CL_trigger();
 void rotateAction();
 void stopRotateAction();
 void WEIGHT_init();
+void UPDATE(STAGE stage);
 int WEIGHT_read();
 float WEIGHT_getGrams();
 bool getWiFiStatus();

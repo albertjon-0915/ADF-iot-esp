@@ -38,22 +38,6 @@ bool FLAG_lock = false;
 //   .WEIGHT_wLoad = 400.0
 // };
 
-void UPDATE(STAGE stage) {
-    rtdb_data *d; // this is a pointer
-    // use & (if you rebind later)
-    switch (stage) {
-      case FIRST: d = &DISPENSING; break;
-      case SECOND: d = &FOODREADY; break; 
-      case FINAL: d = &IDLE; break;
-    }
-
-    // send it 3 times incase of failure
-    for(int i = 0; i < 3; i++){
-      firebaseSendStatus(*d);
-      delay(200);
-    }
-}
-
 void assignCurrentTime() {
   TIME_now = getCurrentTime();
   Serial.println(TIME_now);
@@ -127,11 +111,11 @@ void loop() {
     Serial.println("SECOND STAGE");
 
     if (WEIGHT_isStopFeeding(jsonResp, weight)) {
-      stopRotateAction();
-      FLAG_stop = false;              // close the 2nd stage
-      FLAG_complete = true;           //  unlock the final stage
       // firebaseSendStatus(FOODREADY);  // update to foodready
-      UPDATE(SECOND); // update to foodready
+      stopRotateAction();
+      FLAG_stop = false;     // close the 2nd stage
+      FLAG_complete = true;  //  unlock the final stage
+      UPDATE(SECOND);        // update to foodready
     }
     return;
   }
@@ -140,11 +124,11 @@ void loop() {
     Serial.println("FINAL STAGE");
 
     if (weight <= 100) {
-      FLAG_update = false;       // lift the update lock on dispensing
-      FLAG_complete = false;     // close the final stage
-      FLAG_lock = false;         // release the cycle lock
       // firebaseSendStatus(IDLE);  // update to IDLE
-      UPDATE(FINAL); // update to IDLE
+      FLAG_update = false;    // lift the update lock on dispensing
+      FLAG_complete = false;  // close the final stage
+      FLAG_lock = false;      // release the cycle lock
+      UPDATE(FINAL);          // update to IDLE
     }
     return;
   }

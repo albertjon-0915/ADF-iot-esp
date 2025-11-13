@@ -42,7 +42,7 @@ static UIDCode uidToCode(const String &uid) {
 // Callback
 void processData(AsyncResult &aResult) {
   if (!aResult.isResult()) return;
-  // Serial.println("processing data fetched");
+  Serial.println("processing data fetched");
 
   if (aResult.isError()) {
     Serial.printf("Firebase error: %s (uid=%s)\n", aResult.error().message().c_str(), aResult.uid().c_str());
@@ -132,4 +132,21 @@ void firebaseSendStatus(const rtdb_data &d) {
   // Async set calls (no callback provided here) -> nullptr
   Database.set<String>(aClient, "/feeder_status/feeding_status", d.FB_status, nullptr, "US");
   Database.set<bool>(aClient, "/feeder_status/isFeeding", d.FB_isFeeding, nullptr, "UI");
+}
+
+void UPDATE(STAGE stage) {
+  rtdb_data* d;  // this is a pointer
+  // use & (if you rebind later)
+  switch (stage) {
+    case FIRST: d = &DISPENSING; break;
+    case SECOND: d = &FOODREADY; break;
+    case FINAL: d = &IDLE; break;
+    default: d = &IDLE; break;
+  }
+
+  // send it 3 times incase of failure
+  for (int i = 0; i < 3; i++) {
+    firebaseSendStatus(*d);
+    delay(200);
+  }
 }
