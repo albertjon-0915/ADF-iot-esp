@@ -147,6 +147,6 @@ void UPDATE(STAGE stage) {
   // send it 3 times incase of failure
   for (int i = 0; i < 3; i++) {
     firebaseSendStatus(*d);
-    delay(200);
+    delay(50);
   }
 }

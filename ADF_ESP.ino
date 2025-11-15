@@ -16,7 +16,7 @@ const int DST = 0;          // No DST in PH
 
 
 const int PWM_channel = 0;
-const int PWM_freq = 5000;
+const int PWM_freq = 30000;
 const int PWM_resolution = 8;
 
 rtdb_data data;
@@ -60,9 +60,19 @@ CREATE_ASYNC_FN(GET_dateTime, 5000, assignCurrentTime);
 
 void setup() {
   Serial.begin(115200);
-  delay(1000);
-
   ledcAttachChannel(L298N_PWM, PWM_freq, PWM_resolution, PWM_channel);
+  ledcWriteChannel(PWM_channel, 255);
+
+
+  // check system
+  rotateAction();
+  delay(1000);
+  stopRotateAction();
+  delay(1000);
+  rotateAction();
+  delay(10000);
+  stopRotateAction();
+
 
   configTime(GMT, DST, ntpServer);
 
@@ -72,28 +82,33 @@ void setup() {
   if (!res) Serial.println("Failed to connect");
   else Serial.println("Connected to network !!!");
 
+  WiFi.setSleep(true);
+
   firebaseInit();
 }
 
 void loop() {
-  ledcWrite(PWM_channel, 255);
-
-  firebasePoll();
   asyncDelay(GET_dateTime);
 
 
   bool TIME_ISFEED;
   bool STATUS_ISFEED;
-  float weight = WEIGHT_getGrams();  // read analog value and convert to grams
+  float weight;
+  // float weight = WEIGHT_getGrams();  // read analog value and convert to grams
   STATUS_ISFEED = STATUS_isFeedNow(jsonResp);
   TIME_ISFEED = TIME_isFeedNow(jsonResp);
 
+  firebasePoll();
+  yield();
 
   if (TIME_ISFEED || STATUS_ISFEED && !FLAG_lock) FLAG_feed = true;
-  if (TIME_ISFEED && !FLAG_update) { FLAG_update = true; UPDATE(FIRST); }
+  if (TIME_ISFEED && !FLAG_update) {
+    FLAG_update = true;
+    UPDATE(FIRST);
+  }
 
 
-  if (FLAG_feed == true) {
+  if (FLAG_feed) {
     Serial.println("FIRST STAGE");
 
     if (TIME_ISFEED) Serial.println("via TIME: Feed time !!!");
@@ -105,31 +120,40 @@ void loop() {
     FLAG_lock = true;   // finish cycle before feeding again
   }
 
-  if (FLAG_stop == true) {
+  if (FLAG_stop) {
     Serial.println("SECOND STAGE");
+    weight = WEIGHT_getGrams();  // read analog value and convert to grams
 
     if (WEIGHT_isStopFeeding(jsonResp, weight)) {
       // firebaseSendStatus(FOODREADY);  // update to foodready
       stopRotateAction();
       FLAG_stop = false;     // close the 2nd stage
       FLAG_complete = true;  //  unlock the final stage
-      UPDATE(SECOND);        // update to foodready
+      do {
+        firebasePoll();
+        yield();
+        UPDATE(SECOND);  // update to foodready
+      } while (!STATUS_isFoodReady);
     }
     return;
   }
 
-  if (FLAG_complete == true) {
+  if (FLAG_complete) {
     Serial.println("FINAL STAGE");
+    weight = WEIGHT_getGrams();  // read analog value and convert to grams
 
     if (weight <= 100) {
       // firebaseSendStatus(IDLE);  // update to IDLE
       FLAG_update = false;    // lift the update lock on dispensing
       FLAG_complete = false;  // close the final stage
       FLAG_lock = false;      // release the cycle lock
-      UPDATE(FINAL);          // update to IDLE
+      do {
+        firebasePoll();
+        yield();
+        UPDATE(FINAL);  // update to IDLE
+      } while (!STATUS_isDoneIdle);
     }
-    return;
   }
 
-  delay(50);
+  // delay(50);
 }

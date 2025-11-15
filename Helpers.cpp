@@ -155,3 +155,15 @@ bool STATUS_isFeedNow(rtdb_data &status) {
   // if (status.FB_isFeeding == true && status.FB_status == "FOODREADY") return true;
   return false;
 }
+
+bool STATUS_isFoodReady(rtdb_data &status) {
+  if (status.FB_isFeeding == true && status.FB_status == "FOODREADY") return true;
+  // if (status.FB_isFeeding == true && status.FB_status == "FOODREADY") return true;
+  return false;
+}
+
+bool STATUS_isDoneIdle(rtdb_data &status) {
+  if (status.FB_isFeeding == false && status.FB_status == "IDLE") return true;
+  // if (status.FB_isFeeding == true && status.FB_status == "FOODREADY") return true;
+  return false;
+}
