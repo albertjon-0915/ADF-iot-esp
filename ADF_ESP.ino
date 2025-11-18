@@ -64,15 +64,50 @@ void setup() {
   ledcWriteChannel(PWM_channel, 255);
 
 
-  // check system
-  rotateAction();
-  delay(1000);
-  stopRotateAction();
-  delay(1000);
-  rotateAction();
-  delay(10000);
-  stopRotateAction();
+  while (true) {
+    // check system
+    rotateAction();
+    delay(2000);
+    stopRotateAction();
+    ledcWriteChannel(PWM_channel, 230);
+    delay(1000);
 
+    rotateAction();
+    delay(2000);
+    stopRotateAction();
+    ledcWriteChannel(PWM_channel, 200);
+    delay(1000);
+
+    rotateAction();
+    delay(2000);
+    stopRotateAction();
+    ledcWriteChannel(PWM_channel, 180);
+    delay(1000);
+
+    rotateAction();
+    delay(2000);
+    stopRotateAction();
+    ledcWriteChannel(PWM_channel, 150);
+    delay(1000);
+
+    rotateAction();
+    delay(2000);
+    stopRotateAction();
+    ledcWriteChannel(PWM_channel, 120);
+    delay(1000);
+
+    rotateAction();
+    delay(2000);
+    stopRotateAction();
+    ledcWriteChannel(PWM_channel, 100);
+    delay(1000);
+
+    rotateAction();
+    delay(2000);
+    stopRotateAction();
+    ledcWriteChannel(PWM_channel, 80);
+    delay(1000);
+  }
 
   configTime(GMT, DST, ntpServer);
 
@@ -133,6 +168,7 @@ void loop() {
         firebasePoll();
         yield();
         UPDATE(SECOND);  // update to foodready
+        // bool STATUS_isFoodReady = STATUS_isFoodReady(jsonResp);
       } while (!STATUS_isFoodReady);
     }
     return;
@@ -147,6 +183,7 @@ void loop() {
       FLAG_update = false;    // lift the update lock on dispensing
       FLAG_complete = false;  // close the final stage
       FLAG_lock = false;      // release the cycle lock
+      // bool STATUS_idDoneIdle = STATUS_isDoneIdle(jsonResp);
       do {
         firebasePoll();
         yield();
