@@ -70,42 +70,49 @@ void setup() {
     delay(2000);
     stopRotateAction();
     ledcWriteChannel(PWM_channel, 230);
+    Serial.println("System check: 230 rotate");
     delay(1000);
 
     rotateAction();
     delay(2000);
     stopRotateAction();
     ledcWriteChannel(PWM_channel, 200);
+    Serial.println("System check: 200 rotate");
     delay(1000);
 
     rotateAction();
     delay(2000);
     stopRotateAction();
     ledcWriteChannel(PWM_channel, 180);
+    Serial.println("System check: 180 rotate");
     delay(1000);
 
     rotateAction();
     delay(2000);
     stopRotateAction();
     ledcWriteChannel(PWM_channel, 150);
+    Serial.println("System check: 150 rotate");
     delay(1000);
 
     rotateAction();
     delay(2000);
     stopRotateAction();
     ledcWriteChannel(PWM_channel, 120);
+    Serial.println("System check: 120 rotate");
     delay(1000);
 
     rotateAction();
     delay(2000);
     stopRotateAction();
     ledcWriteChannel(PWM_channel, 100);
+    Serial.println("System check: 100 rotate");
     delay(1000);
 
     rotateAction();
     delay(2000);
     stopRotateAction();
     ledcWriteChannel(PWM_channel, 80);
+    Serial.println("System check: 80 rotate");
     delay(1000);
   }
 
