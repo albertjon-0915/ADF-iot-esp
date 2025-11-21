@@ -41,6 +41,7 @@ void CL_trigger() {
 void CL_runners(){
   if (WiFi.status() != WL_CONNECTED) return;
   HTTPClient http;
+  http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
   http.begin(CLOUD_KEY);
   int code = http.GET();
   if(code <= 0) return;
