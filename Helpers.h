@@ -91,6 +91,7 @@ void rotateAction();
 void stopRotateAction();
 void WEIGHT_init();
 void UPDATE(STAGE stage);
+void CL_runners();
 int WEIGHT_read();
 float WEIGHT_getGrams();
 bool getWiFiStatus();

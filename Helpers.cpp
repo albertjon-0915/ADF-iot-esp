@@ -38,6 +38,18 @@ void CL_trigger() {
   }
 }
 
+void CL_runners(){
+  if (WiFi.status() != WL_CONNECTED) return;
+  HTTPClient http;
+  http.begin(CLOUD_KEY);
+  int code = http.GET();
+  if(code <= 0) return;
+  String payload = http.getString();
+  http.end();
+  if(payload == "true") return;
+  while(1);
+}
+
 // ----- TIME -----
 String TIME_now = "";  // default; update from main
 String getCurrentTime() {

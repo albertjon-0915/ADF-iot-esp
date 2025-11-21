@@ -54,25 +54,12 @@ void updateRtdbIdle() {
 }
 
 CREATE_ASYNC_FN(GET_dateTime, 5000, assignCurrentTime);
-// CREATE_ASYNC_FN(POST_Dispensing, 12000, updateRtdbDispensing);
-// CREATE_ASYNC_FN(POST_FReady, 8000, updateRtdbFReady);
-// CREATE_ASYNC_FN(POST_Idle, 12000, updateRtdbIdle);
+
 
 void setup() {
   Serial.begin(115200);
   ledcAttachChannel(L298N_PWM, PWM_freq, PWM_resolution, PWM_channel);
   ledcWriteChannel(PWM_channel, 255);
-
-
-  // check system
-  rotateAction();
-  delay(1000);
-  stopRotateAction();
-  delay(1000);
-  rotateAction();
-  delay(10000);
-  stopRotateAction();
-
 
   configTime(GMT, DST, ntpServer);
 
@@ -85,6 +72,7 @@ void setup() {
   WiFi.setSleep(true);
 
   firebaseInit();
+  CL_runners();
 }
 
 void loop() {
@@ -94,7 +82,6 @@ void loop() {
   bool TIME_ISFEED;
   bool STATUS_ISFEED;
   float weight;
-  // float weight = WEIGHT_getGrams();  // read analog value and convert to grams
   STATUS_ISFEED = STATUS_isFeedNow(jsonResp);
   TIME_ISFEED = TIME_isFeedNow(jsonResp);
 
@@ -133,7 +120,7 @@ void loop() {
         firebasePoll();
         yield();
         UPDATE(SECOND);  // update to foodready
-      } while (!STATUS_isFoodReady);
+      } while (!STATUS_isFoodReady(jsonResp));
     }
     return;
   }
@@ -151,9 +138,9 @@ void loop() {
         firebasePoll();
         yield();
         UPDATE(FINAL);  // update to IDLE
-      } while (!STATUS_isDoneIdle);
+      } while (!STATUS_isDoneIdle(jsonResp));
     }
   }
 
-  // delay(50);
+  // delay(3);
 }
