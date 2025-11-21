@@ -4,5 +4,7 @@
 // const char* FIREBASE_DB_URL = "";
 // const char* CLOUD_FUNCTION_URL = "";
 // const char* CLOUD_KEY = "";
+// const char* AUTH_EMAIL = "";
+// const char* AUTH_PASS = "";
 // const char* AP_SSID = "";
 // const char* AP_PSK = "";
