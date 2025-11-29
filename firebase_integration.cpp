@@ -68,7 +68,7 @@ void processData(AsyncResult &aResult) {
       break;
     case U_RTB_ISFEEDING:
       jsonResp.FB_isFeeding = (payload == "true" || payload == "1");
-      Serial.printf("FB isFeeding -> %d\n", jsonResp.FB_isFeeding);
+      // Serial.printf("FB isFeeding -> %d\n", jsonResp.FB_isFeeding);
       break;
     case U_RTB_BREAKFAST:
       jsonResp.FB_breakfast = payload;
