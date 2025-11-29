@@ -128,7 +128,6 @@ void loop() {
       bool FLAG_escapsulated = false;
       do {
         firebasePoll();
-        yield();
         UPDATE(SECOND);  // update to foodready
         bool FLAG_escapsulated = STATUS_isFoodReady(jsonResp);
       } while (!FLAG_escapsulated);
@@ -150,7 +149,6 @@ void loop() {
       bool FLAG_escapsulated = false;
       do {
         firebasePoll();
-        yield();
         UPDATE(FINAL);  // update to IDLE
         FLAG_escapsulated = STATUS_isDoneIdle(jsonResp);
       } while (!FLAG_escapsulated);
