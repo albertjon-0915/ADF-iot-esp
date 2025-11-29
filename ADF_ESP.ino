@@ -126,6 +126,7 @@ void loop() {
       FLAG_complete = true;  //  unlock the final stage
       Serial.println("polling for foodready confirmation...");
       bool FLAG_escapsulated = false;
+      
       do {
         firebasePoll();
         UPDATE(SECOND);  // update to foodready
@@ -147,6 +148,7 @@ void loop() {
       FLAG_lock = false;      // release the cycle lock
       Serial.println("polling for idle confirmation...");
       bool FLAG_escapsulated = false;
+
       do {
         firebasePoll();
         UPDATE(FINAL);  // update to IDLE
