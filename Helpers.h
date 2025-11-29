@@ -25,6 +25,7 @@ struct WEIGHT;
 
 void firebaseInit();                          // call after WiFi connected
 void firebasePoll();                          // call regularly from loop()
+void rawPolling();                          // not an async polling
 void firebaseSendStatus(const rtdb_data &d);  // send status update to RTDB
 
 

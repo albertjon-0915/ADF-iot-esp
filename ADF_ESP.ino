@@ -128,8 +128,9 @@ void loop() {
       bool FLAG_escapsulated = false;
       
       do {
-        firebasePoll();
+        rawPolling();
         UPDATE(SECOND);  // update to foodready
+        delay(2000);
         bool FLAG_escapsulated = STATUS_isFoodReady(jsonResp);
       } while (!FLAG_escapsulated);
       Serial.print("food ready confirmed...");
@@ -150,8 +151,9 @@ void loop() {
       bool FLAG_escapsulated = false;
 
       do {
-        firebasePoll();
+        rawPolling();
         UPDATE(FINAL);  // update to IDLE
+        delay(2000);
         FLAG_escapsulated = STATUS_isDoneIdle(jsonResp);
       } while (!FLAG_escapsulated);
       Serial.print("idle confirmed...");
