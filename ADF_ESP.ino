@@ -43,17 +43,24 @@ void assignCurrentTime() {
   Serial.println(TIME_now);
 }
 
-void updateRtdbDispensing() {
-  firebaseSendStatus(DISPENSING);
-}
-void updateRtdbFReady() {
-  firebaseSendStatus(FOODREADY);
-}
-void updateRtdbIdle() {
-  firebaseSendStatus(IDLE);
+// void updateRtdbDispensing() {
+//   firebaseSendStatus(DISPENSING);
+// }
+
+// void updateRtdbFReady() {
+//   firebaseSendStatus(FOODREADY);
+// }
+
+// void updateRtdbIdle() {
+//   firebaseSendStatus(IDLE);
+// }
+
+void polling() {
+  firebasePoll();
 }
 
 CREATE_ASYNC_FN(GET_dateTime, 5000, assignCurrentTime);
+CREATE_ASYNC_FN(FR_polling, 10000, polling);
 
 
 void setup() {
@@ -63,7 +70,7 @@ void setup() {
 
   configTime(GMT, DST, ntpServer);
 
-  WiFi.mode(WIFI_MODE_STA);            //  STA mode (explicit call -> will deafult to AP+STA anyway)
+  WiFi.mode(WIFI_MODE_STA);            //  STA mode (explicit call -> will default to AP+STA anyway)
   bool res = wm.autoConnect("espGo");  // anonymous ap
 
   if (!res) Serial.println("Failed to connect");
@@ -85,9 +92,9 @@ void loop() {
   STATUS_ISFEED = STATUS_isFeedNow(jsonResp);
   TIME_ISFEED = TIME_isFeedNow(jsonResp);
 
-  firebasePoll();
+  // firebasePoll();
+  asyncDelay(FR_polling);
   Serial.println("polling feeding time confirmation...");
-  yield();
 
   if (TIME_ISFEED || STATUS_ISFEED && !FLAG_lock) FLAG_feed = true;
   if (TIME_ISFEED && !FLAG_update) {
@@ -118,6 +125,7 @@ void loop() {
       FLAG_stop = false;     // close the 2nd stage
       FLAG_complete = true;  //  unlock the final stage
       Serial.println("polling for foodready confirmation...");
+      bool FLAG_escapsulated = false;
       do {
         firebasePoll();
         yield();
@@ -139,17 +147,18 @@ void loop() {
       FLAG_complete = false;  // close the final stage
       FLAG_lock = false;      // release the cycle lock
       Serial.println("polling for idle confirmation...");
+      bool FLAG_escapsulated = false;
       do {
         firebasePoll();
         yield();
         UPDATE(FINAL);  // update to IDLE
-        bool FLAG_escapsulated = STATUS_isDoneIdle(jsonResp);
+        FLAG_escapsulated = STATUS_isDoneIdle(jsonResp);
       } while (!FLAG_escapsulated);
       Serial.print("idle confirmed...");
     }
+    Serial.println("feeding done!...");
   }
 
-  Serial.println("feeding done!...");
 
-  delay(50);
+  delay(200);
 }
