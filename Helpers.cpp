@@ -56,7 +56,7 @@ String TIME_now = "";  // default; update from main
 String getCurrentTime() {
   struct tm timeinfo;
   if (!getLocalTime(&timeinfo)) {
-    Serial.println("Failed to obtain time");
+    return "Readying Time, please wait...";
   }
   char buf[16];
   strftime(buf, sizeof(buf), "%I:%M %p", &timeinfo);
