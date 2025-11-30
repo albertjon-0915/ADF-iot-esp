@@ -94,10 +94,11 @@ void loop() {
 
   // firebasePoll();
   asyncDelay(FR_polling);
-  Serial.println("polling feeding time confirmation...");
+  // Serial.println("polling feeding time confirmation...");
 
   if (TIME_ISFEED || STATUS_ISFEED && !FLAG_lock) FLAG_feed = true;
   if (TIME_ISFEED && !FLAG_update) {
+    FLAG_feed = true;
     FLAG_update = true;
     UPDATE(FIRST);
   }
@@ -124,13 +125,13 @@ void loop() {
       stopRotateAction();
       FLAG_stop = false;     // close the 2nd stage
       FLAG_complete = true;  //  unlock the final stage
-      Serial.println("polling for foodready confirmation...");
       bool FLAG_escapsulated = false;
+      Serial.println("polling for foodready confirmation...");
       
       do {
-        rawPolling();
         UPDATE(SECOND);  // update to foodready
-        delay(2000);
+        delay(5000);
+        rawPolling();
         bool FLAG_escapsulated = STATUS_isFoodReady(jsonResp);
       } while (!FLAG_escapsulated);
       Serial.print("food ready confirmed...");
@@ -147,13 +148,13 @@ void loop() {
       FLAG_update = false;    // lift the update lock on dispensing
       FLAG_complete = false;  // close the final stage
       FLAG_lock = false;      // release the cycle lock
-      Serial.println("polling for idle confirmation...");
       bool FLAG_escapsulated = false;
+      Serial.println("polling for idle confirmation...");
 
       do {
-        rawPolling();
         UPDATE(FINAL);  // update to IDLE
-        delay(2000);
+        delay(5000);
+        rawPolling();
         FLAG_escapsulated = STATUS_isDoneIdle(jsonResp);
       } while (!FLAG_escapsulated);
       Serial.print("idle confirmed...");
