@@ -84,7 +84,7 @@ void setup() {
 
 void loop() {
   asyncDelay(GET_dateTime);
-
+  if(TIME_now == "Readying Time, please wait...") return;
 
   bool TIME_ISFEED;
   bool STATUS_ISFEED;
