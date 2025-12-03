@@ -118,7 +118,7 @@ void loop() {
         UPDATE(SECOND);  // update to foodready
         delay(2000);
         rawPolling();
-        delay(200)
+        delay(2000);
       }
 
       FLAG_stop = false;     // close the 2nd stage
