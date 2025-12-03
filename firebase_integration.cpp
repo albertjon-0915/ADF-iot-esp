@@ -119,7 +119,7 @@ void firebaseInit() {
 }
 
 static unsigned long lastPoll = 0;
-const unsigned long POLL_MS = 5000;  // asynchronous timer
+const unsigned long POLL_MS = 6000;  // asynchronous timer
 
 // Timed polling
 void firebasePoll() {
@@ -139,21 +139,6 @@ void firebasePoll() {
   Database.get(aClient, "/feeder_status/dinner_sched", processData, false, "rtb_dinner");
 }
 
-// Poll without timing check
-// void rawPolling() {
-//   app.loop();
-//   if (!app.ready()) return;
-//   // Serial.print("POLLING : ");
-
-//   // Async gets — callback will update globals
-//   Database.get(aClient, "/feeder_status/feeding_status", processData, false, "rtb_status");
-//   Database.get(aClient, "/feeder_status/food_amount", processData, false, "rtb_food");
-//   Database.get(aClient, "/feeder_status/isFeeding", processData, false, "rtb_isFeeding");
-//   Database.get(aClient, "/feeder_status/breakfast_sched", processData, false, "rtb_breakfast");
-//   Database.get(aClient, "/feeder_status/lunch_sched", processData, false, "rtb_lunch");
-//   Database.get(aClient, "/feeder_status/dinner_sched", processData, false, "rtb_dinner");
-// }
-
 void firebaseSendStatus(const rtdb_data &d) {
   app.loop();
   if (!app.ready()) return;
@@ -172,7 +157,7 @@ void firebaseSendStatus(const rtdb_data &d) {
   // Switch to synchronous set calls
   bool okStatus = Database.set<string_t>(aClient, "/feeder_status/feeding_status", string_t(d.FB_status));
   if (!okStatus) {
-    Serial.print("feeding_status update error... ");
+    Serial.print("RTDB -> feeding_status update error... ");
     assignValues = false;
   } else {
     Serial.println("RTDB -> feeding_status updated!");
@@ -180,7 +165,7 @@ void firebaseSendStatus(const rtdb_data &d) {
 
   bool okFeeding = Database.set<boolean_t>(aClient, "/feeder_status/isFeeding", boolean_t(d.FB_isFeeding));
   if (!okFeeding) {
-    Serial.print("isFeeding update error... ");
+    Serial.print("RTDB -> isFeeding update error... ");
     assignValues = false;
   } else {
     Serial.println("RTDB -> isFeeding updated!");
@@ -190,7 +175,7 @@ void firebaseSendStatus(const rtdb_data &d) {
   if (assignValues) {
 
     String jsonRespStatus = Database.get<String>(aClient, "/feeder_status/feeding_status");
-    bool jsonRespFeeding = Database.get<bool>(aClient, "/feeder_status/feeding_isFeeding");
+    bool jsonRespFeeding = Database.get<bool>(aClient, "/feeder_status/isFeeding");
 
     jsonResp.FB_status = jsonRespStatus;
     jsonResp.FB_isFeeding = jsonRespFeeding;
@@ -208,10 +193,4 @@ void UPDATE(STAGE stage) {
   }
 
   firebaseSendStatus(*d);
-
-  // send it 3 times incase of failure
-  // for (int i = 0; i < 2; i++) {
-  //   firebaseSendStatus(*d);
-  //   delay(2000);
-  // }
 }

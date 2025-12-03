@@ -43,13 +43,8 @@ void assignCurrentTime() {
   Serial.println(TIME_now);
 }
 
-// void polling() {
-//   // firebasePoll();
-//   rawPolling();
-// }
 
 CREATE_ASYNC_FN(GET_dateTime, 5000, assignCurrentTime);
-// CREATE_ASYNC_FN(FR_polling, 10000, polling);
 
 
 void setup() {
@@ -83,12 +78,9 @@ void loop() {
   STATUS_ISFEED = STATUS_isFeedNow(jsonResp);
   TIME_ISFEED = TIME_isFeedNow(jsonResp);
 
-  // asyncDelay(FR_polling);
-  // Serial.println("polling feeding time confirmation...");
 
   if (TIME_ISFEED || STATUS_ISFEED && !FLAG_lock) FLAG_feed = true;
   if (TIME_ISFEED && !FLAG_update) {
-    // FLAG_feed = true;
     FLAG_update = true;
     UPDATE(FIRST);
   }
@@ -107,13 +99,12 @@ void loop() {
   }
 
   if (FLAG_stop) {
-    // Serial.println("SECOND STAGE");
+    Serial.println("SECOND STAGE");
     weight = WEIGHT_getGrams();  // read analog value and convert to grams
 
     if (WEIGHT_isStopFeeding(jsonResp, weight)) {
       bool cycle = false;
       stopRotateAction();
-      // UPDATE(SECOND);  // update to foodready
 
       while (!cycle) {
         UPDATE(SECOND);  // update to foodready
@@ -131,18 +122,19 @@ void loop() {
     weight = WEIGHT_getGrams();  // read analog value and convert to grams
 
     if (weight <= 100) {
-      UPDATE(FINAL);  // update to IDLE]
+      bool cycle = false;
 
-      if (STATUS_isDoneIdle(jsonResp)) {
-        FLAG_update = false;    // lift the update lock on dispensing
-        FLAG_complete = false;  // close the final stage
-        FLAG_lock = false;      // release the cycle lock
-        CL_trigger();
+      while (!cycle) {
+        UPDATE(FINAL);  // update to IDLE
+        delay(2000);
+        cycle = STATUS_isDoneIdle(jsonResp);
       }
-    }
 
-    // firebasePoll();
-    // delay(10000);  // buffer before the pet consumes the food, 10 secs is fast for eating already
+      FLAG_update = false;    // lift the update lock on dispensing
+      FLAG_complete = false;  // close the final stage
+      FLAG_lock = false;      // release the cycle lock
+      CL_trigger();
+    }
   }
 
 
