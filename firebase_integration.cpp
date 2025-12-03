@@ -192,8 +192,8 @@ void firebaseSendStatus(const rtdb_data &d) {
     String jsonRespStatus = Database.get<String>(aClient, "/feeder_status/feeding_status");
     bool jsonRespFeeding = Database.get<bool>(aClient, "/feeder_status/feeding_isFeeding");
 
-    jsonResp.FB_status = Svalue;
-    jsonResp.FB_isFeeding = Bvalue;
+    jsonResp.FB_status = jsonRespStatus;
+    jsonResp.FB_isFeeding = jsonRespFeeding;
   }
 }
 

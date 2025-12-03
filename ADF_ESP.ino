@@ -111,12 +111,14 @@ void loop() {
     weight = WEIGHT_getGrams();  // read analog value and convert to grams
 
     if (WEIGHT_isStopFeeding(jsonResp, weight)) {
+      bool cycle = false;
       stopRotateAction();
       // UPDATE(SECOND);  // update to foodready
 
-      while (!STATUS_isFoodReady(jsonResp)) {
+      while (!cycle) {
         UPDATE(SECOND);  // update to foodready
         delay(2000);
+        cycle = STATUS_isFoodReady(jsonResp);
       }
 
       FLAG_stop = false;     // close the 2nd stage
