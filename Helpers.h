@@ -25,7 +25,6 @@ struct WEIGHT;
 
 void firebaseInit();                          // call after WiFi connected
 void firebasePoll();                          // call regularly from loop()
-// void rawPolling();                          // not an async polling
 void firebaseSendStatus(const rtdb_data &d);  // send status update to RTDB
 
 
@@ -52,6 +51,13 @@ struct WEIGHT {
   float WEIGHT_noLoad;
   float WEIGHT_wLoad;
   float TARE_offset;
+};
+
+enum FLAG {
+  INACTIVITY,
+  INITIAL,
+  PROCCEED,
+  END
 };
 
 enum CON_STATUS { INVALID_CREDS,

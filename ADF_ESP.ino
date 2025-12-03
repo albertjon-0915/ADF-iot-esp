@@ -27,6 +27,7 @@ bool FLAG_stop = false;
 bool FLAG_update = false;
 bool FLAG_complete = false;
 bool FLAG_lock = false;
+FLAG CONTROLLER = INACTIVITY;
 
 
 // WEIGHT WEIGHT_Data = {
@@ -75,30 +76,36 @@ void loop() {
   bool TIME_ISFEED;
   bool STATUS_ISFEED;
   float weight;
+
   STATUS_ISFEED = STATUS_isFeedNow(jsonResp);
   TIME_ISFEED = TIME_isFeedNow(jsonResp);
 
 
-  if (TIME_ISFEED || STATUS_ISFEED && !FLAG_lock) FLAG_feed = true;
-  if (TIME_ISFEED && !FLAG_update) {
-    FLAG_update = true;
-    UPDATE(FIRST);
-  }
+  // if (TIME_ISFEED || STATUS_ISFEED && !FLAG_lock) FLAG_feed = true;
+  // if (TIME_ISFEED && !FLAG_update) {
+    //   FLAG_update = true; // just update RTDB (DISPENSING status) once
+    //   UPDATE(FIRST);
+    // }
+    
+  if (TIME_ISFEED || STATUS_ISFEED && CONTROLLER == INACTIVITY) CONTROLLER = INITIAL;
+  if (TIME_ISFEED && !STATUS_isDoneIdle(jsonResp)) UPDATE(FIRST);
+  
 
 
-  if (FLAG_feed) {
+  if (CONTROLLER == INITIAL) {
     Serial.println("FIRST STAGE");
 
     if (TIME_ISFEED) Serial.println("via TIME: Feed time !!!");
     if (STATUS_ISFEED) Serial.println("via MANUAL: Feeding time !!!");
 
     rotateAction();
-    FLAG_feed = false;  // close the 1st stage
-    FLAG_stop = true;   // unlock the 2nd stage
-    FLAG_lock = true;   // finish cycle before feeding again
+    // FLAG_feed = false;  // close the 1st stage
+    // FLAG_stop = true;   // unlock the 2nd stage
+    // FLAG_lock = true;   // finish cycle before feeding again
+    CONTROLLER = PROCCEED;
   }
 
-  if (FLAG_stop) {
+  if (CONTROLLER == PROCCEED) {
     Serial.println("SECOND STAGE");
     weight = WEIGHT_getGrams();  // read analog value and convert to grams
 
@@ -112,12 +119,13 @@ void loop() {
         cycle = STATUS_isFoodReady(jsonResp);
       }
 
-      FLAG_stop = false;     // close the 2nd stage
-      FLAG_complete = true;  //  unlock the final stage
+      // FLAG_stop = false;     // close the 2nd stage
+      // FLAG_complete = true;  //  unlock the final stage
+      CONTROLLER = END;
     }
   }
 
-  if (FLAG_complete) {
+  if (CONTROLLER == END) {
     Serial.println("FINAL STAGE");
     weight = WEIGHT_getGrams();  // read analog value and convert to grams
 
@@ -130,9 +138,10 @@ void loop() {
         cycle = STATUS_isDoneIdle(jsonResp);
       }
 
-      FLAG_update = false;    // lift the update lock on dispensing
-      FLAG_complete = false;  // close the final stage
-      FLAG_lock = false;      // release the cycle lock
+      // FLAG_update = false;    // lift the update lock on dispensing
+      // FLAG_complete = false;  // close the final stage
+      // FLAG_lock = false;      // release the cycle lock
+      CONTROLLER = INACTIVITY;
       CL_trigger();
     }
   }
