@@ -140,24 +140,25 @@ void firebasePoll() {
 }
 
 // Poll without timing check
-void rawPolling() {
-  app.loop();
-  if (!app.ready()) return;
-  // Serial.print("POLLING : ");
+// void rawPolling() {
+//   app.loop();
+//   if (!app.ready()) return;
+//   // Serial.print("POLLING : ");
 
-  // Async gets — callback will update globals
-  Database.get(aClient, "/feeder_status/feeding_status", processData, false, "rtb_status");
-  Database.get(aClient, "/feeder_status/food_amount", processData, false, "rtb_food");
-  Database.get(aClient, "/feeder_status/isFeeding", processData, false, "rtb_isFeeding");
-  Database.get(aClient, "/feeder_status/breakfast_sched", processData, false, "rtb_breakfast");
-  Database.get(aClient, "/feeder_status/lunch_sched", processData, false, "rtb_lunch");
-  Database.get(aClient, "/feeder_status/dinner_sched", processData, false, "rtb_dinner");
-}
+//   // Async gets — callback will update globals
+//   Database.get(aClient, "/feeder_status/feeding_status", processData, false, "rtb_status");
+//   Database.get(aClient, "/feeder_status/food_amount", processData, false, "rtb_food");
+//   Database.get(aClient, "/feeder_status/isFeeding", processData, false, "rtb_isFeeding");
+//   Database.get(aClient, "/feeder_status/breakfast_sched", processData, false, "rtb_breakfast");
+//   Database.get(aClient, "/feeder_status/lunch_sched", processData, false, "rtb_lunch");
+//   Database.get(aClient, "/feeder_status/dinner_sched", processData, false, "rtb_dinner");
+// }
 
 void firebaseSendStatus(const rtdb_data &d) {
   app.loop();
   if (!app.ready()) return;
 
+  bool assignValues = true;
   Serial.print(d.FB_status);
   Serial.print(" : ");
   Serial.print(d.FB_isFeeding);
@@ -173,6 +174,7 @@ void firebaseSendStatus(const rtdb_data &d) {
   if (!okStatus) {
     Serial.print("feeding_status error: ");
     Serial.println(app.lastError().c_str());
+    assignValues = false;
   } else {
     Serial.println("RTDB -> feeding_status updated!");
   }
@@ -181,8 +183,22 @@ void firebaseSendStatus(const rtdb_data &d) {
   if (!okFeeding) {
     Serial.print("isFeeding error: ");
     Serial.println(app.lastError().c_str());
+    assignValues = false;
   } else {
     Serial.println("RTDB -> isFeeding updated!");
+  }
+
+  if (assignValues) {
+    string_t Svalue;
+    boolean_t Bvalue;
+
+    bool jsonRespStatus = Database.get(aClient, "/feeder_status/feeding_status", Svalue);
+    bool jsonRespFeeding = Database.get(aClient, "/feeder_status/feeding_status", Bvalue);
+
+    if (jsonRespStatus && jsonRespFeeding) {
+      jsonResp.FB_status = Svalue.value();
+      jsonResp.FB_isFeeding = Bvalue.value();
+    }
   }
 }
 
