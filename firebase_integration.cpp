@@ -172,8 +172,7 @@ void firebaseSendStatus(const rtdb_data &d) {
   // Switch to synchronous set calls
   bool okStatus = Database.set<string_t>(aClient, "/feeder_status/feeding_status", string_t(d.FB_status));
   if (!okStatus) {
-    Serial.print("feeding_status error: ");
-    Serial.println(app.lastError().c_str());
+    Serial.print("feeding_status update error... ");
     assignValues = false;
   } else {
     Serial.println("RTDB -> feeding_status updated!");
@@ -181,8 +180,7 @@ void firebaseSendStatus(const rtdb_data &d) {
 
   bool okFeeding = Database.set<boolean_t>(aClient, "/feeder_status/isFeeding", boolean_t(d.FB_isFeeding));
   if (!okFeeding) {
-    Serial.print("isFeeding error: ");
-    Serial.println(app.lastError().c_str());
+    Serial.print("isFeeding update error... ");
     assignValues = false;
   } else {
     Serial.println("RTDB -> isFeeding updated!");
