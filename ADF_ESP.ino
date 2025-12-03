@@ -121,7 +121,7 @@ void loop() {
     Serial.println("FINAL STAGE");
     weight = WEIGHT_getGrams();  // read analog value and convert to grams
 
-    if (weight <= 100) {
+    if (weight <= 5) {
       bool cycle = false;
 
       while (!cycle) {
