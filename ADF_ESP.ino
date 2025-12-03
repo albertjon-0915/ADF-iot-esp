@@ -117,8 +117,6 @@ void loop() {
       while (!STATUS_isFoodReady(jsonResp)) {
         UPDATE(SECOND);  // update to foodready
         delay(2000);
-        rawPolling();
-        delay(2000);
       }
 
       FLAG_stop = false;     // close the 2nd stage
