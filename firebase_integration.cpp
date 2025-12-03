@@ -130,13 +130,13 @@ void firebasePoll() {
   if (now - lastPoll < POLL_MS) return;
   lastPoll = now;
 
-    // Async gets — callback will update globals
-    Database.get(aClient, "/feeder_status/feeding_status", processData, false, "rtb_status");
-    Database.get(aClient, "/feeder_status/food_amount", processData, false, "rtb_food");
-    Database.get(aClient, "/feeder_status/isFeeding", processData, false, "rtb_isFeeding");
-    Database.get(aClient, "/feeder_status/breakfast_sched", processData, false, "rtb_breakfast");
-    Database.get(aClient, "/feeder_status/lunch_sched", processData, false, "rtb_lunch");
-    Database.get(aClient, "/feeder_status/dinner_sched", processData, false, "rtb_dinner");
+  // Async gets — callback will update globals
+  Database.get(aClient, "/feeder_status/feeding_status", processData, false, "rtb_status");
+  Database.get(aClient, "/feeder_status/food_amount", processData, false, "rtb_food");
+  Database.get(aClient, "/feeder_status/isFeeding", processData, false, "rtb_isFeeding");
+  Database.get(aClient, "/feeder_status/breakfast_sched", processData, false, "rtb_breakfast");
+  Database.get(aClient, "/feeder_status/lunch_sched", processData, false, "rtb_lunch");
+  Database.get(aClient, "/feeder_status/dinner_sched", processData, false, "rtb_dinner");
 }
 
 // Poll without timing check
@@ -186,17 +186,14 @@ void firebaseSendStatus(const rtdb_data &d) {
     Serial.println("RTDB -> isFeeding updated!");
   }
 
+  // Get and assign freshly update values to jsonResp
   if (assignValues) {
-    string_t Svalue;
-    boolean_t Bvalue;
 
-    bool jsonRespStatus = Database.get(aClient, "/feeder_status/feeding_status", Svalue);
-    bool jsonRespFeeding = Database.get(aClient, "/feeder_status/feeding_status", Bvalue);
+    String jsonRespStatus = Database.get<String>(aClient, "/feeder_status/feeding_status");
+    bool jsonRespFeeding = Database.get<bool>(aClient, "/feeder_status/feeding_isFeeding");
 
-    if (jsonRespStatus && jsonRespFeeding) {
-      jsonResp.FB_status = Svalue.value();
-      jsonResp.FB_isFeeding = Bvalue.value();
-    }
+    jsonResp.FB_status = Svalue;
+    jsonResp.FB_isFeeding = Bvalue;
   }
 }
 
