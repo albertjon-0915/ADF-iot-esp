@@ -42,13 +42,15 @@ static UIDCode uidToCode(const String &uid) {
 // Callback
 void processData(AsyncResult &aResult) {
   if (!aResult.isResult()) return;
-  // Serial.println("processing data fetched");
 
   if (aResult.isError()) {
     Serial.printf("Firebase error: %s (uid=%s)\n", aResult.error().message().c_str(), aResult.uid().c_str());
     return;
   }
-  if (!aResult.available()) return;
+  if (!aResult.available()) {
+    Serial.println("No handshake with the RTDB, waiting for data...");
+    return;
+  }
 
   String uid = aResult.uid();
   String payload = aResult.c_str();
@@ -88,32 +90,64 @@ void processData(AsyncResult &aResult) {
   }
 }
 
+void checkHandShake(AsyncResult &aResult) {
+  if (!aResult.isResult())
+    return;
+
+  if (aResult.isEvent())
+    Firebase.printf("Event task: %s, msg: %s, code: %d\n", aResult.uid().c_str(), aResult.eventLog().message().c_str(), aResult.eventLog().code());
+
+  if (aResult.isDebug())
+    Firebase.printf("Debug task: %s, msg: %s\n", aResult.uid().c_str(), aResult.debug().c_str());
+
+  if (aResult.isError())
+    Firebase.printf("Error task: %s, msg: %s, code: %d\n", aResult.uid().c_str(), aResult.error().message().c_str(), aResult.error().code());
+
+  if (aResult.available())
+    Firebase.printf("task: %s, payload: %s\n", aResult.uid().c_str(), aResult.c_str());
+}
+
 void firebaseInit() {
   ssl_client.setInsecure();
   ssl_client.setConnectionTimeout(3000);
-  ssl_client.setHandshakeTimeout(5);
+  ssl_client.setHandshakeTimeout(10000);
 
-  initializeApp(aClient, app, getAuth(user_auth), processData, "authTask");
+  initializeApp(aClient, app, getAuth(user_auth), checkHandShake, "authTask");
   app.getApp<RealtimeDatabase>(Database);
   Database.url(FIREBASE_DB_URL);
   Serial.println("FirebaseClient initialization requested");
 }
 
 static unsigned long lastPoll = 0;
-const unsigned long POLL_MS = 5000;  // asynchronous timer
+const unsigned long POLL_MS = 7000;  // asynchronous timer
 
 void firebasePoll() {
+  static int step = 0;
+  app.loop();
+  if (!app.ready()) return;
+
   unsigned long now = millis();
   if (now - lastPoll < POLL_MS) return;
   lastPoll = now;
-  
-  rawPolling();
+
+  switch (step) {
+    // Async gets — callback will update globals
+    Database.get(aClient, "/feeder_status/feeding_status", processData, false, "rtb_status");
+    Database.get(aClient, "/feeder_status/food_amount", processData, false, "rtb_food");
+    Database.get(aClient, "/feeder_status/isFeeding", processData, false, "rtb_isFeeding");
+    Database.get(aClient, "/feeder_status/breakfast_sched", processData, false, "rtb_breakfast");
+    Database.get(aClient, "/feeder_status/lunch_sched", processData, false, "rtb_lunch");
+    Database.get(aClient, "/feeder_status/dinner_sched", processData, false, "rtb_dinner");
+  }
+
+  step = (step + 1) % 6;  // cycle 0→1→2→3→4→5→0
 }
 
-void rawPolling(){
+void rawPolling() {
   app.loop();
   if (!app.ready()) return;
-  
+  // Serial.print("POLLING : ");
+
   // Async gets — callback will update globals
   Database.get(aClient, "/feeder_status/feeding_status", processData, false, "rtb_status");
   Database.get(aClient, "/feeder_status/food_amount", processData, false, "rtb_food");
@@ -126,7 +160,7 @@ void rawPolling(){
 void firebaseSendStatus(const rtdb_data &d) {
   app.loop();
   if (!app.ready()) return;
-  
+
   Serial.print(d.FB_status);
   Serial.print(" : ");
   Serial.print(d.FB_isFeeding);
@@ -139,7 +173,7 @@ void firebaseSendStatus(const rtdb_data &d) {
 }
 
 void UPDATE(STAGE stage) {
-  rtdb_data* d;  // this is a pointer
+  rtdb_data *d;  // this is a pointer
   // use & (if you rebind later)
   switch (stage) {
     case FIRST: d = &DISPENSING; break;
@@ -149,8 +183,8 @@ void UPDATE(STAGE stage) {
   }
 
   // send it 3 times incase of failure
-  for (int i = 0; i < 3; i++) {
+  for (int i = 0; i < 2; i++) {
     firebaseSendStatus(*d);
-    delay(1000);
+    delay(2000);
   }
 }

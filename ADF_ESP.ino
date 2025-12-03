@@ -43,24 +43,13 @@ void assignCurrentTime() {
   Serial.println(TIME_now);
 }
 
-// void updateRtdbDispensing() {
-//   firebaseSendStatus(DISPENSING);
+// void polling() {
+//   // firebasePoll();
+//   rawPolling();
 // }
-
-// void updateRtdbFReady() {
-//   firebaseSendStatus(FOODREADY);
-// }
-
-// void updateRtdbIdle() {
-//   firebaseSendStatus(IDLE);
-// }
-
-void polling() {
-  firebasePoll();
-}
 
 CREATE_ASYNC_FN(GET_dateTime, 5000, assignCurrentTime);
-CREATE_ASYNC_FN(FR_polling, 10000, polling);
+// CREATE_ASYNC_FN(FR_polling, 10000, polling);
 
 
 void setup() {
@@ -84,7 +73,9 @@ void setup() {
 
 void loop() {
   asyncDelay(GET_dateTime);
-  if(TIME_now == "Readying Time, please wait...") return;
+  if (TIME_now == "Readying Time, please wait...") return;
+
+  firebasePoll();
 
   bool TIME_ISFEED;
   bool STATUS_ISFEED;
@@ -92,13 +83,12 @@ void loop() {
   STATUS_ISFEED = STATUS_isFeedNow(jsonResp);
   TIME_ISFEED = TIME_isFeedNow(jsonResp);
 
-  // firebasePoll();
-  asyncDelay(FR_polling);
+  // asyncDelay(FR_polling);
   // Serial.println("polling feeding time confirmation...");
 
   if (TIME_ISFEED || STATUS_ISFEED && !FLAG_lock) FLAG_feed = true;
   if (TIME_ISFEED && !FLAG_update) {
-    FLAG_feed = true;
+    // FLAG_feed = true;
     FLAG_update = true;
     UPDATE(FIRST);
   }
@@ -117,26 +107,23 @@ void loop() {
   }
 
   if (FLAG_stop) {
-    Serial.println("SECOND STAGE");
+    // Serial.println("SECOND STAGE");
     weight = WEIGHT_getGrams();  // read analog value and convert to grams
 
     if (WEIGHT_isStopFeeding(jsonResp, weight)) {
-      // firebaseSendStatus(FOODREADY);  // update to foodready
+      UPDATE(SECOND);  // update to foodready
       stopRotateAction();
-      FLAG_stop = false;     // close the 2nd stage
-      FLAG_complete = true;  //  unlock the final stage
-      bool FLAG_escapsulated = false;
-      Serial.println("polling for foodready confirmation...");
-      
-      do {
-        UPDATE(SECOND);  // update to foodready
-        delay(5000);
-        rawPolling();
-        bool FLAG_escapsulated = STATUS_isFoodReady(jsonResp);
-      } while (!FLAG_escapsulated);
-      Serial.print("food ready confirmed...");
+
+      Serial.print("FOODREADY STATUS : ");
+      Serial.print(jsonResp.FB_status);
+      Serial.print(" : ");
+      Serial.println(STATUS_isFoodReady(jsonResp));
+
+      if (STATUS_isFoodReady(jsonResp)) {
+        FLAG_stop = false;     // close the 2nd stage
+        FLAG_complete = true;  //  unlock the final stage
+      }
     }
-    return;
   }
 
   if (FLAG_complete) {
@@ -144,22 +131,18 @@ void loop() {
     weight = WEIGHT_getGrams();  // read analog value and convert to grams
 
     if (weight <= 100) {
-      // firebaseSendStatus(IDLE);  // update to IDLE
-      FLAG_update = false;    // lift the update lock on dispensing
-      FLAG_complete = false;  // close the final stage
-      FLAG_lock = false;      // release the cycle lock
-      bool FLAG_escapsulated = false;
-      Serial.println("polling for idle confirmation...");
+      UPDATE(FINAL);  // update to IDLE]
 
-      do {
-        UPDATE(FINAL);  // update to IDLE
-        delay(5000);
-        rawPolling();
-        FLAG_escapsulated = STATUS_isDoneIdle(jsonResp);
-      } while (!FLAG_escapsulated);
-      Serial.print("idle confirmed...");
+      if (STATUS_isDoneIdle(jsonResp)) {
+        FLAG_update = false;    // lift the update lock on dispensing
+        FLAG_complete = false;  // close the final stage
+        FLAG_lock = false;      // release the cycle lock
+        CL_trigger();
+      }
     }
-    Serial.println("feeding done!...");
+
+    // firebasePoll();
+    // delay(10000);  // buffer before the pet consumes the food, 10 secs is fast for eating already
   }
 
 
