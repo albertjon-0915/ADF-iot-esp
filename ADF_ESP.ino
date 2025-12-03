@@ -111,18 +111,18 @@ void loop() {
     weight = WEIGHT_getGrams();  // read analog value and convert to grams
 
     if (WEIGHT_isStopFeeding(jsonResp, weight)) {
-      UPDATE(SECOND);  // update to foodready
       stopRotateAction();
+      // UPDATE(SECOND);  // update to foodready
 
-      Serial.print("FOODREADY STATUS : ");
-      Serial.print(jsonResp.FB_status);
-      Serial.print(" : ");
-      Serial.println(STATUS_isFoodReady(jsonResp));
-
-      if (STATUS_isFoodReady(jsonResp)) {
-        FLAG_stop = false;     // close the 2nd stage
-        FLAG_complete = true;  //  unlock the final stage
+      while (!STATUS_isFoodReady(jsonResp)) {
+        UPDATE(SECOND);  // update to foodready
+        delay(2000);
+        rawPolling();
+        delay(200)
       }
+
+      FLAG_stop = false;     // close the 2nd stage
+      FLAG_complete = true;  //  unlock the final stage
     }
   }
 

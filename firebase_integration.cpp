@@ -112,17 +112,17 @@ void firebaseInit() {
   ssl_client.setConnectionTimeout(3000);
   ssl_client.setHandshakeTimeout(10000);
 
-  initializeApp(aClient, app, getAuth(user_auth), checkHandShake, "authTask");
+  initializeApp(aClient, app, getAuth(user_auth), checkHandShake, "AUTH TASK: ");
   app.getApp<RealtimeDatabase>(Database);
   Database.url(FIREBASE_DB_URL);
   Serial.println("FirebaseClient initialization requested");
 }
 
 static unsigned long lastPoll = 0;
-const unsigned long POLL_MS = 7000;  // asynchronous timer
+const unsigned long POLL_MS = 5000;  // asynchronous timer
 
+// Timed polling
 void firebasePoll() {
-  static int step = 0;
   app.loop();
   if (!app.ready()) return;
 
@@ -130,7 +130,6 @@ void firebasePoll() {
   if (now - lastPoll < POLL_MS) return;
   lastPoll = now;
 
-  switch (step) {
     // Async gets — callback will update globals
     Database.get(aClient, "/feeder_status/feeding_status", processData, false, "rtb_status");
     Database.get(aClient, "/feeder_status/food_amount", processData, false, "rtb_food");
@@ -138,11 +137,9 @@ void firebasePoll() {
     Database.get(aClient, "/feeder_status/breakfast_sched", processData, false, "rtb_breakfast");
     Database.get(aClient, "/feeder_status/lunch_sched", processData, false, "rtb_lunch");
     Database.get(aClient, "/feeder_status/dinner_sched", processData, false, "rtb_dinner");
-  }
-
-  step = (step + 1) % 6;  // cycle 0→1→2→3→4→5→0
 }
 
+// Poll without timing check
 void rawPolling() {
   app.loop();
   if (!app.ready()) return;
@@ -168,8 +165,26 @@ void firebaseSendStatus(const rtdb_data &d) {
   Serial.println("sending data to rtdb");
 
   // Async set calls (no callback provided here) -> nullptr
-  Database.set<String>(aClient, "/feeder_status/feeding_status", d.FB_status, nullptr, "US");
-  Database.set<bool>(aClient, "/feeder_status/isFeeding", d.FB_isFeeding, nullptr, "UI");
+  // Database.set<String>(aClient, "/feeder_status/feeding_status", d.FB_status, nullptr, "US");
+  // Database.set<bool>(aClient, "/feeder_status/isFeeding", d.FB_isFeeding, nullptr, "UI");
+
+  // Switch to synchronous set calls
+  bool okStatus = Database.set<string_t>(aClient, "/feeder_status/feeding_status", string_t(d.FB_status));
+  bool okFeeding = Database.set<boolean_t>(aClient, "/feeder_status/isFeeding", boolean_t(d.FB_isFeeding));
+
+  if (!okStatus) {
+    Serial.print("feeding_status error: ");
+    Serial.println(aClient.errorReason());
+  } else {
+    Serial.println("RTDB -> feeding_status updated!");
+  }
+
+  if (!okFeeding) {
+    Serial.print("isFeeding error: ");
+    Serial.println(aClient.errorReason());
+  } else {
+    Serial.println("RTDB -> isFeeding updated!");
+  }
 }
 
 void UPDATE(STAGE stage) {
@@ -182,9 +197,11 @@ void UPDATE(STAGE stage) {
     default: d = &IDLE; break;
   }
 
+  firebaseSendStatus(*d);
+
   // send it 3 times incase of failure
-  for (int i = 0; i < 2; i++) {
-    firebaseSendStatus(*d);
-    delay(2000);
-  }
+  // for (int i = 0; i < 2; i++) {
+  //   firebaseSendStatus(*d);
+  //   delay(2000);
+  // }
 }
