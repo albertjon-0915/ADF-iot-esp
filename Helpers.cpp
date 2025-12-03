@@ -158,6 +158,8 @@ bool WEIGHT_isStopFeeding(rtdb_data &food_amount, float current_weight) {
   double rtdb_weight = food_amount.FB_foodAmount;
   Serial.print(rtdb_weight);
   Serial.print(" : ");
+  Serial.print(current_weight);
+  Serial.print(" -> ");
   Serial.println(rtdb_weight < current_weight);
   return (rtdb_weight < current_weight);
 }
