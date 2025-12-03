@@ -22,11 +22,15 @@ const int PWM_resolution = 8;
 rtdb_data data;
 WiFiManager wm;
 
-bool FLAG_feed = false;
-bool FLAG_stop = false;
-bool FLAG_update = false;
-bool FLAG_complete = false;
-bool FLAG_lock = false;
+// bool FLAG_feed = false;
+// bool FLAG_stop = false;
+// bool FLAG_update = false;
+// bool FLAG_complete = false;
+// bool FLAG_lock = false;
+
+bool TIME_ISFEED;
+bool STATUS_ISFEED;
+float weight;
 FLAG CONTROLLER = INACTIVITY;
 
 
@@ -73,9 +77,7 @@ void loop() {
 
   firebasePoll();
 
-  bool TIME_ISFEED;
-  bool STATUS_ISFEED;
-  float weight;
+
 
   STATUS_ISFEED = STATUS_isFeedNow(jsonResp);
   TIME_ISFEED = TIME_isFeedNow(jsonResp);
@@ -88,14 +90,16 @@ void loop() {
     // }
     
   if (TIME_ISFEED || STATUS_ISFEED && CONTROLLER == INACTIVITY) CONTROLLER = INITIAL;
-  if (TIME_ISFEED && !STATUS_isDoneIdle(jsonResp)) UPDATE(FIRST);
-  
 
 
   if (CONTROLLER == INITIAL) {
     Serial.println("FIRST STAGE");
 
-    if (TIME_ISFEED) Serial.println("via TIME: Feed time !!!");
+    if (TIME_ISFEED) {
+       UPDATE(FIRST);
+       Serial.println("via TIME: Feed time !!!");
+    }
+
     if (STATUS_ISFEED) Serial.println("via MANUAL: Feeding time !!!");
 
     rotateAction();
