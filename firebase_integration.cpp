@@ -42,13 +42,15 @@ static UIDCode uidToCode(const String &uid) {
 // Callback
 void processData(AsyncResult &aResult) {
   if (!aResult.isResult()) return;
-  // Serial.println("processing data fetched");
 
   if (aResult.isError()) {
     Serial.printf("Firebase error: %s (uid=%s)\n", aResult.error().message().c_str(), aResult.uid().c_str());
     return;
   }
-  if (!aResult.available()) return;
+  if (!aResult.available()) {
+    Serial.println("No handshake with the RTDB, waiting for data...");
+    return;
+  }
 
   String uid = aResult.uid();
   String payload = aResult.c_str();
@@ -68,7 +70,7 @@ void processData(AsyncResult &aResult) {
       break;
     case U_RTB_ISFEEDING:
       jsonResp.FB_isFeeding = (payload == "true" || payload == "1");
-      Serial.printf("FB isFeeding -> %d\n", jsonResp.FB_isFeeding);
+      // Serial.printf("FB isFeeding -> %d\n", jsonResp.FB_isFeeding);
       break;
     case U_RTB_BREAKFAST:
       jsonResp.FB_breakfast = payload;
@@ -88,24 +90,42 @@ void processData(AsyncResult &aResult) {
   }
 }
 
+void checkHandShake(AsyncResult &aResult) {
+  if (!aResult.isResult())
+    return;
+
+  if (aResult.isEvent())
+    Firebase.printf("Event task: %s, msg: %s, code: %d\n", aResult.uid().c_str(), aResult.eventLog().message().c_str(), aResult.eventLog().code());
+
+  if (aResult.isDebug())
+    Firebase.printf("Debug task: %s, msg: %s\n", aResult.uid().c_str(), aResult.debug().c_str());
+
+  if (aResult.isError())
+    Firebase.printf("Error task: %s, msg: %s, code: %d\n", aResult.uid().c_str(), aResult.error().message().c_str(), aResult.error().code());
+
+  if (aResult.available())
+    Firebase.printf("task: %s, payload: %s\n", aResult.uid().c_str(), aResult.c_str());
+}
+
 void firebaseInit() {
   ssl_client.setInsecure();
   ssl_client.setConnectionTimeout(3000);
-  ssl_client.setHandshakeTimeout(5);
+  ssl_client.setHandshakeTimeout(10000);
 
-  initializeApp(aClient, app, getAuth(user_auth), processData, "authTask");
+  initializeApp(aClient, app, getAuth(user_auth), checkHandShake, "AUTH TASK: ");
   app.getApp<RealtimeDatabase>(Database);
   Database.url(FIREBASE_DB_URL);
   Serial.println("FirebaseClient initialization requested");
 }
 
 static unsigned long lastPoll = 0;
-const unsigned long POLL_MS = 5000;  // asynchronous timer
+const unsigned long POLL_MS = 6000;  // asynchronous timer
 
+// Timed polling
 void firebasePoll() {
   app.loop();
-
   if (!app.ready()) return;
+
   unsigned long now = millis();
   if (now - lastPoll < POLL_MS) return;
   lastPoll = now;
@@ -121,8 +141,9 @@ void firebasePoll() {
 
 void firebaseSendStatus(const rtdb_data &d) {
   app.loop();
-
   if (!app.ready()) return;
+
+  bool assignValues = true;
   Serial.print(d.FB_status);
   Serial.print(" : ");
   Serial.print(d.FB_isFeeding);
@@ -130,12 +151,39 @@ void firebaseSendStatus(const rtdb_data &d) {
   Serial.println("sending data to rtdb");
 
   // Async set calls (no callback provided here) -> nullptr
-  Database.set<String>(aClient, "/feeder_status/feeding_status", d.FB_status, nullptr, "US");
-  Database.set<bool>(aClient, "/feeder_status/isFeeding", d.FB_isFeeding, nullptr, "UI");
+  // Database.set<String>(aClient, "/feeder_status/feeding_status", d.FB_status, nullptr, "US");
+  // Database.set<bool>(aClient, "/feeder_status/isFeeding", d.FB_isFeeding, nullptr, "UI");
+
+  // Switch to synchronous set calls
+  bool okStatus = Database.set<string_t>(aClient, "/feeder_status/feeding_status", string_t(d.FB_status));
+  if (!okStatus) {
+    Serial.print("RTDB -> feeding_status update error... ");
+    assignValues = false;
+  } else {
+    Serial.println("RTDB -> feeding_status updated!");
+  }
+
+  bool okFeeding = Database.set<boolean_t>(aClient, "/feeder_status/isFeeding", boolean_t(d.FB_isFeeding));
+  if (!okFeeding) {
+    Serial.print("RTDB -> isFeeding update error... ");
+    assignValues = false;
+  } else {
+    Serial.println("RTDB -> isFeeding updated!");
+  }
+
+  // Get and assign freshly update values to jsonResp
+  if (assignValues) {
+
+    String jsonRespStatus = Database.get<String>(aClient, "/feeder_status/feeding_status");
+    bool jsonRespFeeding = Database.get<bool>(aClient, "/feeder_status/isFeeding");
+
+    jsonResp.FB_status = jsonRespStatus;
+    jsonResp.FB_isFeeding = jsonRespFeeding;
+  }
 }
 
 void UPDATE(STAGE stage) {
-  rtdb_data* d;  // this is a pointer
+  rtdb_data *d;  // this is a pointer
   // use & (if you rebind later)
   switch (stage) {
     case FIRST: d = &DISPENSING; break;
@@ -144,9 +192,5 @@ void UPDATE(STAGE stage) {
     default: d = &IDLE; break;
   }
 
-  // send it 3 times incase of failure
-  for (int i = 0; i < 3; i++) {
-    firebaseSendStatus(*d);
-    delay(50);
-  }
+  firebaseSendStatus(*d);
 }

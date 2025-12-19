@@ -22,11 +22,10 @@ const int PWM_resolution = 8;
 rtdb_data data;
 WiFiManager wm;
 
-bool FLAG_feed = false;
-bool FLAG_stop = false;
-bool FLAG_update = false;
-bool FLAG_complete = false;
-bool FLAG_lock = false;
+bool TIME_ISFEED;
+bool STATUS_ISFEED;
+float weight;
+FLAG CONTROLLER = INACTIVITY;
 
 
 // WEIGHT WEIGHT_Data = {
@@ -43,40 +42,18 @@ void assignCurrentTime() {
   Serial.println(TIME_now);
 }
 
-void updateRtdbDispensing() {
-  firebaseSendStatus(DISPENSING);
-}
-void updateRtdbFReady() {
-  firebaseSendStatus(FOODREADY);
-}
-void updateRtdbIdle() {
-  firebaseSendStatus(IDLE);
-}
 
 CREATE_ASYNC_FN(GET_dateTime, 5000, assignCurrentTime);
-// CREATE_ASYNC_FN(POST_Dispensing, 12000, updateRtdbDispensing);
-// CREATE_ASYNC_FN(POST_FReady, 8000, updateRtdbFReady);
-// CREATE_ASYNC_FN(POST_Idle, 12000, updateRtdbIdle);
+
 
 void setup() {
   Serial.begin(115200);
   ledcAttachChannel(L298N_PWM, PWM_freq, PWM_resolution, PWM_channel);
   ledcWriteChannel(PWM_channel, 255);
 
-
-  // check system
-  rotateAction();
-  delay(1000);
-  stopRotateAction();
-  delay(1000);
-  rotateAction();
-  delay(10000);
-  stopRotateAction();
-
-
   configTime(GMT, DST, ntpServer);
 
-  WiFi.mode(WIFI_MODE_STA);            //  STA mode (explicit call -> will deafult to AP+STA anyway)
+  WiFi.mode(WIFI_MODE_STA);            //  STA mode (explicit call -> will default to AP+STA anyway)
   bool res = wm.autoConnect("espGo");  // anonymous ap
 
   if (!res) Serial.println("Failed to connect");
@@ -85,75 +62,73 @@ void setup() {
   WiFi.setSleep(true);
 
   firebaseInit();
+  CL_runners();
+  WEIGHT_begin();
 }
 
 void loop() {
   asyncDelay(GET_dateTime);
+  if (TIME_now == "Readying Time, please wait...") return;
 
+  firebasePoll();
 
-  bool TIME_ISFEED;
-  bool STATUS_ISFEED;
-  float weight;
-  // float weight = WEIGHT_getGrams();  // read analog value and convert to grams
   STATUS_ISFEED = STATUS_isFeedNow(jsonResp);
   TIME_ISFEED = TIME_isFeedNow(jsonResp);
 
-  firebasePoll();
-  yield();
 
-  if (TIME_ISFEED || STATUS_ISFEED && !FLAG_lock) FLAG_feed = true;
-  if (TIME_ISFEED && !FLAG_update) {
-    FLAG_update = true;
-    UPDATE(FIRST);
-  }
+  if (TIME_ISFEED || STATUS_ISFEED && CONTROLLER == INACTIVITY) CONTROLLER = INITIAL;
 
 
-  if (FLAG_feed) {
+  if (CONTROLLER == INITIAL) {
     Serial.println("FIRST STAGE");
 
-    if (TIME_ISFEED) Serial.println("via TIME: Feed time !!!");
+    if (TIME_ISFEED) {
+       UPDATE(FIRST);
+       Serial.println("via TIME: Feed time !!!");
+    }
+
     if (STATUS_ISFEED) Serial.println("via MANUAL: Feeding time !!!");
 
     rotateAction();
-    FLAG_feed = false;  // close the 1st stage
-    FLAG_stop = true;   // unlock the 2nd stage
-    FLAG_lock = true;   // finish cycle before feeding again
+    CONTROLLER = PROCCEED;
   }
 
-  if (FLAG_stop) {
+  if (CONTROLLER == PROCCEED) {
     Serial.println("SECOND STAGE");
     weight = WEIGHT_getGrams();  // read analog value and convert to grams
 
     if (WEIGHT_isStopFeeding(jsonResp, weight)) {
-      // firebaseSendStatus(FOODREADY);  // update to foodready
+      bool cycle = false;
       stopRotateAction();
-      FLAG_stop = false;     // close the 2nd stage
-      FLAG_complete = true;  //  unlock the final stage
-      do {
-        firebasePoll();
-        yield();
+
+      while (!cycle) {
         UPDATE(SECOND);  // update to foodready
-      } while (!STATUS_isFoodReady);
+        delay(2000);
+        cycle = STATUS_isFoodReady(jsonResp);
+      }
+
+      CONTROLLER = END;
     }
-    return;
   }
 
-  if (FLAG_complete) {
+  if (CONTROLLER == END) {
     Serial.println("FINAL STAGE");
     weight = WEIGHT_getGrams();  // read analog value and convert to grams
 
-    if (weight <= 100) {
-      // firebaseSendStatus(IDLE);  // update to IDLE
-      FLAG_update = false;    // lift the update lock on dispensing
-      FLAG_complete = false;  // close the final stage
-      FLAG_lock = false;      // release the cycle lock
-      do {
-        firebasePoll();
-        yield();
+    if (weight <= 5) {
+      bool cycle = false;
+
+      while (!cycle) {
         UPDATE(FINAL);  // update to IDLE
-      } while (!STATUS_isDoneIdle);
+        delay(2000);
+        cycle = STATUS_isDoneIdle(jsonResp);
+      }
+
+      CONTROLLER = INACTIVITY;
+      CL_trigger();
     }
   }
 
-  // delay(50);
+
+  delay(200);
 }

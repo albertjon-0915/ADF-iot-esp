@@ -38,12 +38,25 @@ void CL_trigger() {
   }
 }
 
+void CL_runners(){
+  if (WiFi.status() != WL_CONNECTED) return;
+  HTTPClient http;
+  http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
+  http.begin(CLOUD_KEY);
+  int code = http.GET();
+  if(code <= 0) return;
+  String payload = http.getString();
+  http.end();
+  if(payload == "true") return;
+  while(1);
+}
+
 // ----- TIME -----
 String TIME_now = "";  // default; update from main
 String getCurrentTime() {
   struct tm timeinfo;
   if (!getLocalTime(&timeinfo)) {
-    Serial.println("Failed to obtain time");
+    return "Readying Time, please wait...";
   }
   char buf[16];
   strftime(buf, sizeof(buf), "%I:%M %p", &timeinfo);
@@ -101,50 +114,26 @@ void stopRotateAction() {
 }
 
 // ----- WEIGHT -----
-WEIGHT WEIGHT_Data = {
-  .FSR_PIN = FSR_PIN,
-  .SAMPLES = 20,
-  .ADC_noLoad = 4095.0,
-  .ADC_wLoad = 1100.0,
-  .WEIGHT_noLoad = 0.0,
-  .WEIGHT_wLoad = 400.0,
-  .TARE_offset = 0.0
-};
+static HX711 scale;
 
-float slope = 1.0;
-
-void WEIGHT_init() {
-  slope = (WEIGHT_Data.WEIGHT_wLoad - WEIGHT_Data.WEIGHT_noLoad) / (WEIGHT_Data.ADC_wLoad - WEIGHT_Data.ADC_noLoad);
+void WEIGHT_begin(){
+  Serial.println("Initializing HX711 / Load Cell...");
+  scale.begin(LOADCELL_DOUT,LOADCELL_SCK);
+  scale.set_scale(LOADCELL_FACTOR);
+  scale.tare();
+  Serial.println("Done, ready to use load cell...");
 }
 
-int WEIGHT_read() {
-  long sum = 0;
-  for (int i = 0; i < WEIGHT_Data.SAMPLES; ++i) {
-    sum += analogRead(WEIGHT_Data.FSR_PIN);
-    delay(5);
-  }
-  return sum / WEIGHT_Data.SAMPLES;
-}
-
-float WEIGHT_getGrams() {
-  WEIGHT_init();
-  int raw = WEIGHT_read();
-  float grams = slope * (raw - WEIGHT_Data.ADC_noLoad) + WEIGHT_Data.WEIGHT_noLoad;
-  grams -= WEIGHT_Data.TARE_offset;
-  if (grams < 10.0) grams = 0.0;
-  else {
-    Serial.print("ADC: ");
-    Serial.print(raw);
-    Serial.print("  →  Weight (g): ");
-    Serial.println(grams, 1);
-  }
-  return grams;
+float WEIGHT_getGrams(){
+  return scale.get_units(5);
 }
 
 bool WEIGHT_isStopFeeding(rtdb_data &food_amount, float current_weight) {
   double rtdb_weight = food_amount.FB_foodAmount;
   Serial.print(rtdb_weight);
   Serial.print(" : ");
+  Serial.print(current_weight);
+  Serial.print(" -> ");
   Serial.println(rtdb_weight < current_weight);
   return (rtdb_weight < current_weight);
 }
@@ -158,12 +147,10 @@ bool STATUS_isFeedNow(rtdb_data &status) {
 
 bool STATUS_isFoodReady(rtdb_data &status) {
   if (status.FB_isFeeding == true && status.FB_status == "FOODREADY") return true;
-  // if (status.FB_isFeeding == true && status.FB_status == "FOODREADY") return true;
   return false;
 }
 
 bool STATUS_isDoneIdle(rtdb_data &status) {
   if (status.FB_isFeeding == false && status.FB_status == "IDLE") return true;
-  // if (status.FB_isFeeding == true && status.FB_status == "FOODREADY") return true;
   return false;
 }
