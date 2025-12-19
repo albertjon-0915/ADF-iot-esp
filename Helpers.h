@@ -6,12 +6,17 @@
 #include <HTTPClient.h>
 #include "time.h"
 #include <WiFi.h>
+#include "HX711.h"
+
 
 // *NOTE: uncomment for esp32 30/38 pin configuration
 static constexpr uint8_t L298N_PWM = 13;
 static constexpr uint8_t FSR_PIN = 32;
 static constexpr uint8_t MOTOR1_PIN = 17;
 static constexpr uint8_t MOTOR2_PIN = 16;
+static constexpr uint8_t LOADCELL_DOUT = 34;
+static constexpr uint8_t LOADCELL_SCK = 4;
+static constexpr float LOADCELL_FACTOR = -1125.20952f;
 
 // *NOTE: uncomment for esp32c3 super mini pin configuration
 // static constexpr uint8_t L298N_PWM = 6;
@@ -82,7 +87,6 @@ extern rtdb_data DISPENSING;
 extern rtdb_data FOODREADY;
 extern rtdb_data IDLE;
 extern String TIME_now;
-extern WEIGHT WEIGHT_Data;
 extern MOTOR MOTOR_state;
 
 ONOFF &motorControl_1();
@@ -96,16 +100,15 @@ void SEND_DATA(rtdb_data &data);
 void CL_trigger();
 void rotateAction();
 void stopRotateAction();
-void WEIGHT_init();
+void WEIGHT_begin();
 void UPDATE(STAGE stage);
 void CL_runners();
-int WEIGHT_read();
-float WEIGHT_getGrams();
 bool getWiFiStatus();
 bool TIME_isFeedNow(rtdb_data &sched);
 bool STATUS_isFeedNow(rtdb_data &status);
 bool STATUS_isFoodReady(rtdb_data &status);
 bool STATUS_isDoneIdle(rtdb_data &status);
 bool WEIGHT_isStopFeeding(rtdb_data &food_amount, float current_weight);
+float WEIGHT_getGrams();
 
 #endif  // HELPERS_H

@@ -63,6 +63,7 @@ void setup() {
 
   firebaseInit();
   CL_runners();
+  WEIGHT_begin();
 }
 
 void loop() {
