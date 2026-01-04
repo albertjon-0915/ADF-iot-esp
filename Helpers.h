@@ -16,7 +16,7 @@ static constexpr uint8_t MOTOR1_PIN = 17;
 static constexpr uint8_t MOTOR2_PIN = 16;
 static constexpr uint8_t LOADCELL_DOUT = 34;
 static constexpr uint8_t LOADCELL_SCK = 4;
-static constexpr float LOADCELL_FACTOR = -1125.20952f;
+static constexpr float LOADCELL_FACTOR = 664.688;
 
 // *NOTE: uncomment for esp32c3 super mini pin configuration
 // static constexpr uint8_t L298N_PWM = 6;
