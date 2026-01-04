@@ -26,6 +26,12 @@ enum UIDCode {
   U_RTB_BREAKFAST,
   U_RTB_LUNCH,
   U_RTB_DINNER,
+  // REVISED
+  // U_RTB_1ST,
+  // U_RTB_2ND,
+  // U_RTB_3RD,
+  // U_RTB_4TH,
+  // U_RTB_5TH,
   U_UNKNOWN
 };
 
@@ -36,6 +42,13 @@ static UIDCode uidToCode(const String &uid) {
   if (uid == "rtb_breakfast") return U_RTB_BREAKFAST;
   if (uid == "rtb_lunch") return U_RTB_LUNCH;
   if (uid == "rtb_dinner") return U_RTB_DINNER;
+
+  // REVISED
+  // if (uid == "rtb_1ST") return U_RTB_1ST;
+  // if (uid == "rtb_2ND") return U_RTB_2ND;
+  // if (uid == "rtb_3RD") return U_RTB_3RD;
+  // if (uid == "rtb_4TH") return U_RTB_4TH;
+  // if (uid == "rtb_5TH") return U_RTB_5TH;
   return U_UNKNOWN;
 }
 
@@ -59,6 +72,12 @@ void processData(AsyncResult &aResult) {
     payload = payload.substring(1, payload.length() - 1);
   }
 
+  // NOTE: **ADD PROCESS FOR REVISED FEEDER SCHEDULE
+  // U_RTB_1ST,
+  // U_RTB_2ND,
+  // U_RTB_3RD,
+  // U_RTB_4TH,
+  // U_RTB_5TH,
   switch (uidToCode(uid)) {
     case U_RTB_STATUS:
       jsonResp.FB_status = payload;
@@ -134,9 +153,17 @@ void firebasePoll() {
   Database.get(aClient, "/feeder_status/feeding_status", processData, false, "rtb_status");
   Database.get(aClient, "/feeder_status/food_amount", processData, false, "rtb_food");
   Database.get(aClient, "/feeder_status/isFeeding", processData, false, "rtb_isFeeding");
+
   Database.get(aClient, "/feeder_status/breakfast_sched", processData, false, "rtb_breakfast");
   Database.get(aClient, "/feeder_status/lunch_sched", processData, false, "rtb_lunch");
   Database.get(aClient, "/feeder_status/dinner_sched", processData, false, "rtb_dinner");
+
+  // REVISED
+  // Database.get(aClient, "/feeder_status/schedules/1st", processData, false, "rtb_1st");
+  // Database.get(aClient, "/feeder_status/schedules/2nd", processData, false, "rtb_2nd");
+  // Database.get(aClient, "/feeder_status/schedules/3rd", processData, false, "rtb_3rd");
+  // Database.get(aClient, "/feeder_status/schedules/4th", processData, false, "rtb_4th");
+  // Database.get(aClient, "/feeder_status/schedules/5th", processData, false, "rtb_5th");
 }
 
 void firebaseSendStatus(const rtdb_data &d) {

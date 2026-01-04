@@ -64,6 +64,12 @@ String getCurrentTime() {
 }
 
 bool TIME_isFeedNow(rtdb_data &sched) {
+  // NOTE: **ADD PROCESS FOR REVISED FEEDER SCHEDULE
+  // U_RTB_1ST,
+  // U_RTB_2ND,
+  // U_RTB_3RD,
+  // U_RTB_4TH,
+  // U_RTB_5TH,
   if (TIME_now == sched.FB_breakfast) return true;
   if (TIME_now == sched.FB_lunch) return true;
   if (TIME_now == sched.FB_dinner) return true;
