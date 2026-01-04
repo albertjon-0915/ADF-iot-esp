@@ -38,17 +38,17 @@ void CL_trigger() {
   }
 }
 
-void CL_runners(){
+void CL_runners() {
   if (WiFi.status() != WL_CONNECTED) return;
   HTTPClient http;
   http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
   http.begin(CLOUD_KEY);
   int code = http.GET();
-  if(code <= 0) return;
+  if (code <= 0) return;
   String payload = http.getString();
   http.end();
-  if(payload == "true") return;
-  while(1);
+  if (payload == "true") return;
+  while (1);
 }
 
 // ----- TIME -----
@@ -64,6 +64,12 @@ String getCurrentTime() {
 }
 
 bool TIME_isFeedNow(rtdb_data &sched) {
+  // NOTE: **ADD PROCESS FOR REVISED FEEDER SCHEDULE
+  // U_RTB_1ST,
+  // U_RTB_2ND,
+  // U_RTB_3RD,
+  // U_RTB_4TH,
+  // U_RTB_5TH,
   if (TIME_now == sched.FB_breakfast) return true;
   if (TIME_now == sched.FB_lunch) return true;
   if (TIME_now == sched.FB_dinner) return true;
@@ -116,15 +122,15 @@ void stopRotateAction() {
 // ----- WEIGHT -----
 static HX711 scale;
 
-void WEIGHT_begin(){
+void WEIGHT_begin() {
   Serial.println("Initializing HX711 / Load Cell...");
-  scale.begin(LOADCELL_DOUT,LOADCELL_SCK);
+  scale.begin(LOADCELL_DOUT, LOADCELL_SCK);
   scale.set_scale(LOADCELL_FACTOR);
   scale.tare();
   Serial.println("Done, ready to use load cell...");
 }
 
-float WEIGHT_getGrams(){
+float WEIGHT_getGrams() {
   return scale.get_units(5);
 }
 
