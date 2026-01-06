@@ -19,7 +19,7 @@ const int PWM_channel = 0;
 const int PWM_freq = 30000;
 const int PWM_resolution = 8;
 
-rtdb_data data;
+RTDB_DATA data;
 WiFiManager wm;
 
 bool TIME_ISFEED;

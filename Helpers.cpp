@@ -2,17 +2,17 @@
 
 MOTOR MOTOR_state = SLEEP;
 
-rtdb_data IDLE = {
+RTDB_DATA IDLE = {
   .FB_status = "IDLE",
   .FB_isFeeding = false
 };
 
-rtdb_data DISPENSING = {
+RTDB_DATA DISPENSING = {
   .FB_status = "DISPENSING",
   .FB_isFeeding = true
 };
 
-rtdb_data FOODREADY = {
+RTDB_DATA FOODREADY = {
   .FB_status = "FOODREADY",
   .FB_isFeeding = true
 };
@@ -63,16 +63,16 @@ String getCurrentTime() {
   return String(buf);
 }
 
-bool TIME_isFeedNow(rtdb_data &sched) {
-  // NOTE: **ADD PROCESS FOR REVISED FEEDER SCHEDULE
-  // U_RTB_1ST,
-  // U_RTB_2ND,
-  // U_RTB_3RD,
-  // U_RTB_4TH,
-  // U_RTB_5TH,
-  if (TIME_now == sched.FB_breakfast) return true;
-  if (TIME_now == sched.FB_lunch) return true;
-  if (TIME_now == sched.FB_dinner) return true;
+bool TIME_isFeedNow(RTDB_DATA &sched) {
+  // if (TIME_now == sched.FB_breakfast) return true;
+  // if (TIME_now == sched.FB_lunch) return true;
+  // if (TIME_now == sched.FB_dinner) return true;
+
+  if (TIME_now == sched.FB_first) return true;
+  if (TIME_now == sched.FB_second) return true;
+  if (TIME_now == sched.FB_third) return true;
+  if (TIME_now == sched.FB_fourth) return true;
+  if (TIME_now == sched.FB_fifth) return true;
   return false;
 }
 
@@ -134,7 +134,7 @@ float WEIGHT_getGrams() {
   return scale.get_units(5);
 }
 
-bool WEIGHT_isStopFeeding(rtdb_data &food_amount, float current_weight) {
+bool WEIGHT_isStopFeeding(RTDB_DATA &food_amount, float current_weight) {
   double rtdb_weight = food_amount.FB_foodAmount;
   Serial.print(rtdb_weight);
   Serial.print(" : ");
@@ -145,18 +145,18 @@ bool WEIGHT_isStopFeeding(rtdb_data &food_amount, float current_weight) {
 }
 
 // ----- MANUAL FEED -----
-bool STATUS_isFeedNow(rtdb_data &status) {
+bool STATUS_isFeedNow(RTDB_DATA &status) {
   if (status.FB_isFeeding == true && status.FB_status == "DISPENSING") return true;
   // if (status.FB_isFeeding == true && status.FB_status == "FOODREADY") return true;
   return false;
 }
 
-bool STATUS_isFoodReady(rtdb_data &status) {
+bool STATUS_isFoodReady(RTDB_DATA &status) {
   if (status.FB_isFeeding == true && status.FB_status == "FOODREADY") return true;
   return false;
 }
 
-bool STATUS_isDoneIdle(rtdb_data &status) {
+bool STATUS_isDoneIdle(RTDB_DATA &status) {
   if (status.FB_isFeeding == false && status.FB_status == "IDLE") return true;
   return false;
 }

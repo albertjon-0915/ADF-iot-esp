@@ -2,10 +2,15 @@
 #include <FirebaseClient.h>
 #include <WiFiClientSecure.h>
 
-rtdb_data jsonResp = {
-  .FB_breakfast = "",
-  .FB_lunch = "",
-  .FB_dinner = "",
+RTDB_DATA jsonResp = {
+  // .FB_breakfast = "",
+  // .FB_lunch = "",
+  // .FB_dinner = "",
+  .FB_first = "",
+  .FB_second = "",
+  .FB_third = "",
+  .FB_fourth = "",
+  .FB_fifth = "",
   .FB_status = "IDLE",
   .FB_foodAmount = 0.0,
   .FB_isFeeding = false,
@@ -27,11 +32,11 @@ enum UIDCode {
   U_RTB_LUNCH,
   U_RTB_DINNER,
   // REVISED
-  // U_RTB_1ST,
-  // U_RTB_2ND,
-  // U_RTB_3RD,
-  // U_RTB_4TH,
-  // U_RTB_5TH,
+  U_RTB_1ST,
+  U_RTB_2ND,
+  U_RTB_3RD,
+  U_RTB_4TH,
+  U_RTB_5TH,
   U_UNKNOWN
 };
 
@@ -39,16 +44,15 @@ static UIDCode uidToCode(const String &uid) {
   if (uid == "rtb_status") return U_RTB_STATUS;
   if (uid == "rtb_food") return U_RTB_FOOD;
   if (uid == "rtb_isFeeding") return U_RTB_ISFEEDING;
-  if (uid == "rtb_breakfast") return U_RTB_BREAKFAST;
-  if (uid == "rtb_lunch") return U_RTB_LUNCH;
-  if (uid == "rtb_dinner") return U_RTB_DINNER;
-
+  // if (uid == "rtb_breakfast") return U_RTB_BREAKFAST;
+  // if (uid == "rtb_lunch") return U_RTB_LUNCH;
+  // if (uid == "rtb_dinner") return U_RTB_DINNER;
   // REVISED
-  // if (uid == "rtb_1ST") return U_RTB_1ST;
-  // if (uid == "rtb_2ND") return U_RTB_2ND;
-  // if (uid == "rtb_3RD") return U_RTB_3RD;
-  // if (uid == "rtb_4TH") return U_RTB_4TH;
-  // if (uid == "rtb_5TH") return U_RTB_5TH;
+  if (uid == "rtb_1st") return U_RTB_1ST;
+  if (uid == "rtb_2nd") return U_RTB_2ND;
+  if (uid == "rtb_3rd") return U_RTB_3RD;
+  if (uid == "rtb_4th") return U_RTB_4TH;
+  if (uid == "rtb_5th") return U_RTB_5TH;
   return U_UNKNOWN;
 }
 
@@ -91,17 +95,37 @@ void processData(AsyncResult &aResult) {
       jsonResp.FB_isFeeding = (payload == "true" || payload == "1");
       // Serial.printf("FB isFeeding -> %d\n", jsonResp.FB_isFeeding);
       break;
-    case U_RTB_BREAKFAST:
-      jsonResp.FB_breakfast = payload;
-      // Serial.println("FB breakfast -> " + jsonResp.FB_breakfast);
+    // case U_RTB_BREAKFAST:
+    //   jsonResp.FB_breakfast = payload;
+    //   // Serial.println("FB breakfast -> " + jsonResp.FB_breakfast);
+    //   break;
+    // case U_RTB_LUNCH:
+    //   jsonResp.FB_lunch = payload;
+    //   // Serial.println("FB lunch -> " + jsonResp.FB_lunch);
+    //   break;
+    // case U_RTB_DINNER:
+    //   jsonResp.FB_dinner = payload;
+    //   // Serial.println("FB dinner -> " + jsonResp.FB_dinner);
+    //   break;
+    case U_RTB_1ST:
+      jsonResp.FB_first = payload;
+      Serial.println("FB first schedule -> " + jsonResp.FB_first);
       break;
-    case U_RTB_LUNCH:
-      jsonResp.FB_lunch = payload;
-      // Serial.println("FB lunch -> " + jsonResp.FB_lunch);
+    case U_RTB_2ND:
+      jsonResp.FB_second = payload;
+      Serial.println("FB second schedule -> " + jsonResp.FB_second);
       break;
-    case U_RTB_DINNER:
-      jsonResp.FB_dinner = payload;
-      // Serial.println("FB dinner -> " + jsonResp.FB_dinner);
+    case U_RTB_3RD:
+      jsonResp.FB_third = payload;
+      Serial.println("FB third schedule -> " + jsonResp.FB_third);
+      break;
+    case U_RTB_4TH:
+      jsonResp.FB_fourth = payload;
+      Serial.println("FB fourth schedule -> " + jsonResp.FB_fourth);
+      break;
+    case U_RTB_5TH:
+      jsonResp.FB_fifth = payload;
+      Serial.println("FB fifth schedule -> " + jsonResp.FB_fifth);
       break;
     default:
       Serial.printf("Unhandled UID: %s payload: %s\n", uid.c_str(), payload.c_str());
@@ -154,19 +178,19 @@ void firebasePoll() {
   Database.get(aClient, "/feeder_status/food_amount", processData, false, "rtb_food");
   Database.get(aClient, "/feeder_status/isFeeding", processData, false, "rtb_isFeeding");
 
-  Database.get(aClient, "/feeder_status/breakfast_sched", processData, false, "rtb_breakfast");
-  Database.get(aClient, "/feeder_status/lunch_sched", processData, false, "rtb_lunch");
-  Database.get(aClient, "/feeder_status/dinner_sched", processData, false, "rtb_dinner");
+  // Database.get(aClient, "/feeder_status/breakfast_sched", processData, false, "rtb_breakfast");
+  // Database.get(aClient, "/feeder_status/lunch_sched", processData, false, "rtb_lunch");
+  // Database.get(aClient, "/feeder_status/dinner_sched", processData, false, "rtb_dinner");
 
   // REVISED
-  // Database.get(aClient, "/feeder_status/schedules/1st", processData, false, "rtb_1st");
-  // Database.get(aClient, "/feeder_status/schedules/2nd", processData, false, "rtb_2nd");
-  // Database.get(aClient, "/feeder_status/schedules/3rd", processData, false, "rtb_3rd");
-  // Database.get(aClient, "/feeder_status/schedules/4th", processData, false, "rtb_4th");
-  // Database.get(aClient, "/feeder_status/schedules/5th", processData, false, "rtb_5th");
+  Database.get(aClient, "/feeder_status/schedules/first", processData, false, "rtb_1st");
+  Database.get(aClient, "/feeder_status/schedules/second", processData, false, "rtb_2nd");
+  Database.get(aClient, "/feeder_status/schedules/third", processData, false, "rtb_3rd");
+  Database.get(aClient, "/feeder_status/schedules/fourth", processData, false, "rtb_4th");
+  Database.get(aClient, "/feeder_status/schedules/fifth", processData, false, "rtb_5th");
 }
 
-void firebaseSendStatus(const rtdb_data &d) {
+void firebaseSendStatus(const RTDB_DATA &d) {
   app.loop();
   if (!app.ready()) return;
 
@@ -210,7 +234,7 @@ void firebaseSendStatus(const rtdb_data &d) {
 }
 
 void UPDATE(STAGE stage) {
-  rtdb_data *d;  // this is a pointer
+  RTDB_DATA *d;  // this is a pointer
   // use & (if you rebind later)
   switch (stage) {
     case FIRST: d = &DISPENSING; break;

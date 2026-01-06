@@ -24,25 +24,29 @@ static constexpr float LOADCELL_FACTOR = 664.688;
 // static constexpr uint8_t MOTOR1_PIN = 4;
 // static constexpr uint8_t MOTOR2_PIN = 5;
 
-struct rtdb_data;
+struct RTDB_DATA;
 struct WEIGHT;
-
 
 void firebaseInit();                          // call after WiFi connected
 void firebasePoll();                          // call regularly from loop()
-void firebaseSendStatus(const rtdb_data &d);  // send status update to RTDB
+void firebaseSendStatus(const RTDB_DATA &d);  // send status update to RTDB
 
 
 
-struct Wifi {
-  String ssid;
-  String pass;
-};
+// struct Wifi {
+//   String ssid;
+//   String pass;
+// };
 
-struct rtdb_data {
-  String FB_breakfast;
-  String FB_lunch;
-  String FB_dinner;
+struct RTDB_DATA {
+  // String FB_breakfast;
+  // String FB_lunch;
+  // String FB_dinner;
+  String FB_first;
+  String FB_second;
+  String FB_third;
+  String FB_fourth;
+  String FB_fifth;
   String FB_status;
   double FB_foodAmount;
   bool FB_isFeeding;
@@ -82,21 +86,21 @@ enum STAGE {
   FINAL
 };
 
-extern rtdb_data jsonResp;
-extern rtdb_data DISPENSING;
-extern rtdb_data FOODREADY;
-extern rtdb_data IDLE;
+extern RTDB_DATA jsonResp;
+extern RTDB_DATA DISPENSING;
+extern RTDB_DATA FOODREADY;
+extern RTDB_DATA IDLE;
 extern String TIME_now;
 extern MOTOR MOTOR_state;
 
 ONOFF &motorControl_1();
 ONOFF &motorControl_2();
 CON_STATUS fireBaseConnect();
-rtdb_data GET_DATA();
+RTDB_DATA GET_DATA();
 response FB_createLog();
 String getCurrentTime();
 
-void SEND_DATA(rtdb_data &data);
+void SEND_DATA(RTDB_DATA &data);
 void CL_trigger();
 void rotateAction();
 void stopRotateAction();
@@ -104,11 +108,11 @@ void WEIGHT_begin();
 void UPDATE(STAGE stage);
 void CL_runners();
 bool getWiFiStatus();
-bool TIME_isFeedNow(rtdb_data &sched);
-bool STATUS_isFeedNow(rtdb_data &status);
-bool STATUS_isFoodReady(rtdb_data &status);
-bool STATUS_isDoneIdle(rtdb_data &status);
-bool WEIGHT_isStopFeeding(rtdb_data &food_amount, float current_weight);
+bool TIME_isFeedNow(RTDB_DATA &sched);
+bool STATUS_isFeedNow(RTDB_DATA &status);
+bool STATUS_isFoodReady(RTDB_DATA &status);
+bool STATUS_isDoneIdle(RTDB_DATA &status);
+bool WEIGHT_isStopFeeding(RTDB_DATA &food_amount, float current_weight);
 float WEIGHT_getGrams();
 
 #endif  // HELPERS_H
