@@ -105,6 +105,22 @@ ONOFF &motorControl_2() {
   return *inst2;
 }
 
+ONOFF &LED_indicator() {
+  static bool initialized = false;
+  static Params_onoff led_params;
+  static ONOFF *indicator = nullptr;
+  if (!initialized) {
+    led_params.pin = LED_PIN;
+    led_params.startState = false;
+    led_params.debug = true;
+    indicator = new ONOFF(led_params);
+    initialized = true;
+  }
+  return *indicator;
+}
+
+void indicator(){ LED_indicator().on(); }
+
 void rotateAction() {
   if (MOTOR_state != RUNNING) Serial.println("Rotating motor...");
   motorControl_1().on();

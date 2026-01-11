@@ -24,6 +24,7 @@ WiFiManager wm;
 
 bool TIME_ISFEED;
 bool STATUS_ISFEED;
+bool PREVENT_STATUSFEED = false;
 float weight;
 FLAG CONTROLLER = INACTIVITY;
 
@@ -42,8 +43,16 @@ void assignCurrentTime() {
   Serial.println(TIME_now);
 }
 
+void printResponse() {
+  Serial.printf("FIRST   --> %s\n", jsonResp.FB_first);
+  Serial.printf("SECOND  --> %s\n", jsonResp.FB_second);
+  Serial.printf("THIRD   --> %s\n", jsonResp.FB_third);
+  Serial.printf("FOURTH  --> %s\n", jsonResp.FB_fourth);
+  Serial.printf("FIFTH   --> %s\n", jsonResp.FB_fifth);
+}
 
 CREATE_ASYNC_FN(GET_dateTime, 5000, assignCurrentTime);
+CREATE_ASYNC_FN(PRINT_res, 1000, printResponse);
 
 
 void setup() {
@@ -67,6 +76,7 @@ void setup() {
 }
 
 void loop() {
+  indicator();
   asyncDelay(GET_dateTime);
   if (TIME_now == "Readying Time, please wait...") return;
 
@@ -76,15 +86,19 @@ void loop() {
   TIME_ISFEED = TIME_isFeedNow(jsonResp);
 
 
-  if (TIME_ISFEED || STATUS_ISFEED && CONTROLLER == INACTIVITY) CONTROLLER = INITIAL;
+  if (!PREVENT_STATUSFEED && STATUS_ISFEED && CONTROLLER == INACTIVITY) CONTROLLER = INITIAL;
+  if (TIME_ISFEED && CONTROLLER == INACTIVITY) {
+    PREVENT_STATUSFEED = true;
+    CONTROLLER = INITIAL;
+  }
 
 
   if (CONTROLLER == INITIAL) {
     Serial.println("FIRST STAGE");
 
     if (TIME_ISFEED) {
-       UPDATE(FIRST);
-       Serial.println("via TIME: Feed time !!!");
+      UPDATE(FIRST);
+      Serial.println("via TIME: Feed time !!!");
     }
 
     if (STATUS_ISFEED) Serial.println("via MANUAL: Feeding time !!!");
@@ -124,11 +138,12 @@ void loop() {
         cycle = STATUS_isDoneIdle(jsonResp);
       }
 
-      CONTROLLER = INACTIVITY;
       CL_trigger();
+      CONTROLLER = INACTIVITY;
+      PREVENT_STATUSFEED = false;
     }
   }
 
-
+  // asyncDelay(PRINT_res);
   delay(200);
 }
