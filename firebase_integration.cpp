@@ -3,9 +3,6 @@
 #include <WiFiClientSecure.h>
 
 RTDB_DATA jsonResp = {
-  // .FB_breakfast = "",
-  // .FB_lunch = "",
-  // .FB_dinner = "",
   .FB_first = "",
   .FB_second = "",
   .FB_third = "",
@@ -28,10 +25,6 @@ enum UIDCode {
   U_RTB_STATUS,
   U_RTB_FOOD,
   U_RTB_ISFEEDING,
-  // U_RTB_BREAKFAST,
-  // U_RTB_LUNCH,
-  // U_RTB_DINNER,
-  // REVISED
   U_RTB_1ST,
   U_RTB_2ND,
   U_RTB_3RD,
@@ -44,10 +37,6 @@ static UIDCode uidToCode(const String &uid) {
   if (uid == "rtb_status") return U_RTB_STATUS;
   if (uid == "rtb_food") return U_RTB_FOOD;
   if (uid == "rtb_isFeeding") return U_RTB_ISFEEDING;
-  // if (uid == "rtb_breakfast") return U_RTB_BREAKFAST;
-  // if (uid == "rtb_lunch") return U_RTB_LUNCH;
-  // if (uid == "rtb_dinner") return U_RTB_DINNER;
-  // REVISED
   if (uid == "rtb_1st") return U_RTB_1ST;
   if (uid == "rtb_2nd") return U_RTB_2ND;
   if (uid == "rtb_3rd") return U_RTB_3RD;
@@ -76,12 +65,6 @@ void processData(AsyncResult &aResult) {
     payload = payload.substring(1, payload.length() - 1);
   }
 
-  // NOTE: **ADD PROCESS FOR REVISED FEEDER SCHEDULE
-  // U_RTB_1ST,
-  // U_RTB_2ND,
-  // U_RTB_3RD,
-  // U_RTB_4TH,
-  // U_RTB_5TH,
   switch (uidToCode(uid)) {
     case U_RTB_STATUS:
       jsonResp.FB_status = payload;
@@ -95,18 +78,6 @@ void processData(AsyncResult &aResult) {
       jsonResp.FB_isFeeding = (payload == "true" || payload == "1");
       // Serial.printf("FB isFeeding -> %d\n", jsonResp.FB_isFeeding);
       break;
-    // case U_RTB_BREAKFAST:
-    //   jsonResp.FB_breakfast = payload;
-    //   // Serial.println("FB breakfast -> " + jsonResp.FB_breakfast);
-    //   break;
-    // case U_RTB_LUNCH:
-    //   jsonResp.FB_lunch = payload;
-    //   // Serial.println("FB lunch -> " + jsonResp.FB_lunch);
-    //   break;
-    // case U_RTB_DINNER:
-    //   jsonResp.FB_dinner = payload;
-    //   // Serial.println("FB dinner -> " + jsonResp.FB_dinner);
-    //   break;
     case U_RTB_1ST:
       jsonResp.FB_first = payload;
       // Serial.println("FB first schedule -> " + jsonResp.FB_first);
@@ -178,11 +149,6 @@ void firebasePoll() {
   Database.get(aClient, "/feeder_status/food_amount", processData, false, "rtb_food");
   Database.get(aClient, "/feeder_status/isFeeding", processData, false, "rtb_isFeeding");
 
-  // Database.get(aClient, "/feeder_status/breakfast_sched", processData, false, "rtb_breakfast");
-  // Database.get(aClient, "/feeder_status/lunch_sched", processData, false, "rtb_lunch");
-  // Database.get(aClient, "/feeder_status/dinner_sched", processData, false, "rtb_dinner");
-
-  // REVISED
   Database.get(aClient, "/feeder_status/schedules/first", processData, false, "rtb_1st");
   Database.get(aClient, "/feeder_status/schedules/second", processData, false, "rtb_2nd");
   Database.get(aClient, "/feeder_status/schedules/third", processData, false, "rtb_3rd");
@@ -200,10 +166,6 @@ void firebaseSendStatus(const RTDB_DATA &d) {
   Serial.print(d.FB_isFeeding);
   Serial.print(" -> ");
   Serial.println("sending data to rtdb");
-
-  // Async set calls (no callback provided here) -> nullptr
-  // Database.set<String>(aClient, "/feeder_status/feeding_status", d.FB_status, nullptr, "US");
-  // Database.set<bool>(aClient, "/feeder_status/isFeeding", d.FB_isFeeding, nullptr, "UI");
 
   // Switch to synchronous set calls
   bool okStatus = Database.set<string_t>(aClient, "/feeder_status/feeding_status", string_t(d.FB_status));
@@ -223,8 +185,8 @@ void firebaseSendStatus(const RTDB_DATA &d) {
   }
 
   // Get and assign freshly update values to jsonResp
+  // Synchoronous gets
   if (assignValues) {
-
     String jsonRespStatus = Database.get<String>(aClient, "/feeder_status/feeding_status");
     bool jsonRespFeeding = Database.get<bool>(aClient, "/feeder_status/isFeeding");
 

@@ -19,11 +19,6 @@ static constexpr uint8_t LOADCELL_SCK = 4;
 static constexpr uint8_t LED_PIN = 18;
 static constexpr float LOADCELL_FACTOR = 664.688;
 
-// *NOTE: uncomment for esp32c3 super mini pin configuration
-// static constexpr uint8_t L298N_PWM = 6;
-// static constexpr uint8_t FSR_PIN = 2;
-// static constexpr uint8_t MOTOR1_PIN = 4;
-// static constexpr uint8_t MOTOR2_PIN = 5;
 
 struct RTDB_DATA;
 struct WEIGHT;
@@ -32,17 +27,7 @@ void firebaseInit();                          // call after WiFi connected
 void firebasePoll();                          // call regularly from loop()
 void firebaseSendStatus(const RTDB_DATA &d);  // send status update to RTDB
 
-
-
-// struct Wifi {
-//   String ssid;
-//   String pass;
-// };
-
 struct RTDB_DATA {
-  // String FB_breakfast;
-  // String FB_lunch;
-  // String FB_dinner;
   String FB_first;
   String FB_second;
   String FB_third;

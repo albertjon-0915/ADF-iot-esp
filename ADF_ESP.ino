@@ -19,8 +19,10 @@ const int PWM_channel = 0;
 const int PWM_freq = 30000;
 const int PWM_resolution = 8;
 
+
 RTDB_DATA data;
 WiFiManager wm;
+
 
 bool TIME_ISFEED;
 bool STATUS_ISFEED;
@@ -28,16 +30,7 @@ bool PREVENT_STATUSFEED = false;
 float weight;
 FLAG CONTROLLER = INACTIVITY;
 
-
-// WEIGHT WEIGHT_Data = {
-//   .FSR_PIN = LM393_CPM,
-//   .SAMPLES = 20,
-//   .ADC_noLoad = 4095,
-//   .ADC_wLoad = 1100.0,
-//   .WEIGHT_noLoad = 0.0,
-//   .WEIGHT_wLoad = 400.0
-// };
-
+// Asynchronous functions without using delays
 void assignCurrentTime() {
   TIME_now = getCurrentTime();
   Serial.println(TIME_now);
@@ -71,8 +64,8 @@ void setup() {
   WiFi.setSleep(true);
 
   firebaseInit();
-  CL_runners();
   WEIGHT_begin();
+  // CL_runners();
 }
 
 void loop() {

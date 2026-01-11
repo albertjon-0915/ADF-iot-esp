@@ -64,10 +64,6 @@ String getCurrentTime() {
 }
 
 bool TIME_isFeedNow(RTDB_DATA &sched) {
-  // if (TIME_now == sched.FB_breakfast) return true;
-  // if (TIME_now == sched.FB_lunch) return true;
-  // if (TIME_now == sched.FB_dinner) return true;
-
   if (TIME_now == sched.FB_first) return true;
   if (TIME_now == sched.FB_second) return true;
   if (TIME_now == sched.FB_third) return true;
@@ -163,7 +159,6 @@ bool WEIGHT_isStopFeeding(RTDB_DATA &food_amount, float current_weight) {
 // ----- MANUAL FEED -----
 bool STATUS_isFeedNow(RTDB_DATA &status) {
   if (status.FB_isFeeding == true && status.FB_status == "DISPENSING") return true;
-  // if (status.FB_isFeeding == true && status.FB_status == "FOODREADY") return true;
   return false;
 }
 
