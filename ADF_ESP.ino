@@ -19,31 +19,33 @@ const int PWM_channel = 0;
 const int PWM_freq = 30000;
 const int PWM_resolution = 8;
 
-rtdb_data data;
+
+RTDB_DATA data;
 WiFiManager wm;
+
 
 bool TIME_ISFEED;
 bool STATUS_ISFEED;
+bool PREVENT_STATUSFEED = false;
 float weight;
 FLAG CONTROLLER = INACTIVITY;
 
-
-// WEIGHT WEIGHT_Data = {
-//   .FSR_PIN = LM393_CPM,
-//   .SAMPLES = 20,
-//   .ADC_noLoad = 4095,
-//   .ADC_wLoad = 1100.0,
-//   .WEIGHT_noLoad = 0.0,
-//   .WEIGHT_wLoad = 400.0
-// };
-
+// Asynchronous functions without using delays
 void assignCurrentTime() {
   TIME_now = getCurrentTime();
   Serial.println(TIME_now);
 }
 
+void printResponse() {
+  Serial.printf("FIRST   --> %s\n", jsonResp.FB_first);
+  Serial.printf("SECOND  --> %s\n", jsonResp.FB_second);
+  Serial.printf("THIRD   --> %s\n", jsonResp.FB_third);
+  Serial.printf("FOURTH  --> %s\n", jsonResp.FB_fourth);
+  Serial.printf("FIFTH   --> %s\n", jsonResp.FB_fifth);
+}
 
 CREATE_ASYNC_FN(GET_dateTime, 5000, assignCurrentTime);
+CREATE_ASYNC_FN(PRINT_res, 1000, printResponse);
 
 
 void setup() {
@@ -62,11 +64,12 @@ void setup() {
   WiFi.setSleep(true);
 
   firebaseInit();
-  CL_runners();
   WEIGHT_begin();
+  // CL_runners();
 }
 
 void loop() {
+  indicator();
   asyncDelay(GET_dateTime);
   if (TIME_now == "Readying Time, please wait...") return;
 
@@ -76,15 +79,19 @@ void loop() {
   TIME_ISFEED = TIME_isFeedNow(jsonResp);
 
 
-  if (TIME_ISFEED || STATUS_ISFEED && CONTROLLER == INACTIVITY) CONTROLLER = INITIAL;
+  if (!PREVENT_STATUSFEED && STATUS_ISFEED && CONTROLLER == INACTIVITY) CONTROLLER = INITIAL;
+  if (TIME_ISFEED && CONTROLLER == INACTIVITY) {
+    PREVENT_STATUSFEED = true;
+    CONTROLLER = INITIAL;
+  }
 
 
   if (CONTROLLER == INITIAL) {
     Serial.println("FIRST STAGE");
 
     if (TIME_ISFEED) {
-       UPDATE(FIRST);
-       Serial.println("via TIME: Feed time !!!");
+      UPDATE(FIRST);
+      Serial.println("via TIME: Feed time !!!");
     }
 
     if (STATUS_ISFEED) Serial.println("via MANUAL: Feeding time !!!");
@@ -124,11 +131,12 @@ void loop() {
         cycle = STATUS_isDoneIdle(jsonResp);
       }
 
-      CONTROLLER = INACTIVITY;
       CL_trigger();
+      CONTROLLER = INACTIVITY;
+      PREVENT_STATUSFEED = false;
     }
   }
 
-
+  // asyncDelay(PRINT_res);
   delay(200);
 }

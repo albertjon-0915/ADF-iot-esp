@@ -2,17 +2,17 @@
 
 MOTOR MOTOR_state = SLEEP;
 
-rtdb_data IDLE = {
+RTDB_DATA IDLE = {
   .FB_status = "IDLE",
   .FB_isFeeding = false
 };
 
-rtdb_data DISPENSING = {
+RTDB_DATA DISPENSING = {
   .FB_status = "DISPENSING",
   .FB_isFeeding = true
 };
 
-rtdb_data FOODREADY = {
+RTDB_DATA FOODREADY = {
   .FB_status = "FOODREADY",
   .FB_isFeeding = true
 };
@@ -38,17 +38,17 @@ void CL_trigger() {
   }
 }
 
-void CL_runners(){
+void CL_runners() {
   if (WiFi.status() != WL_CONNECTED) return;
   HTTPClient http;
   http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
   http.begin(CLOUD_KEY);
   int code = http.GET();
-  if(code <= 0) return;
+  if (code <= 0) return;
   String payload = http.getString();
   http.end();
-  if(payload == "true") return;
-  while(1);
+  if (payload == "true") return;
+  while (1);
 }
 
 // ----- TIME -----
@@ -63,10 +63,12 @@ String getCurrentTime() {
   return String(buf);
 }
 
-bool TIME_isFeedNow(rtdb_data &sched) {
-  if (TIME_now == sched.FB_breakfast) return true;
-  if (TIME_now == sched.FB_lunch) return true;
-  if (TIME_now == sched.FB_dinner) return true;
+bool TIME_isFeedNow(RTDB_DATA &sched) {
+  if (TIME_now == sched.FB_first) return true;
+  if (TIME_now == sched.FB_second) return true;
+  if (TIME_now == sched.FB_third) return true;
+  if (TIME_now == sched.FB_fourth) return true;
+  if (TIME_now == sched.FB_fifth) return true;
   return false;
 }
 
@@ -99,6 +101,22 @@ ONOFF &motorControl_2() {
   return *inst2;
 }
 
+ONOFF &LED_indicator() {
+  static bool initialized = false;
+  static Params_onoff led_params;
+  static ONOFF *indicator = nullptr;
+  if (!initialized) {
+    led_params.pin = LED_PIN;
+    led_params.startState = false;
+    led_params.debug = true;
+    indicator = new ONOFF(led_params);
+    initialized = true;
+  }
+  return *indicator;
+}
+
+void indicator(){ LED_indicator().on(); }
+
 void rotateAction() {
   if (MOTOR_state != RUNNING) Serial.println("Rotating motor...");
   motorControl_1().on();
@@ -116,19 +134,19 @@ void stopRotateAction() {
 // ----- WEIGHT -----
 static HX711 scale;
 
-void WEIGHT_begin(){
+void WEIGHT_begin() {
   Serial.println("Initializing HX711 / Load Cell...");
-  scale.begin(LOADCELL_DOUT,LOADCELL_SCK);
+  scale.begin(LOADCELL_DOUT, LOADCELL_SCK);
   scale.set_scale(LOADCELL_FACTOR);
   scale.tare();
   Serial.println("Done, ready to use load cell...");
 }
 
-float WEIGHT_getGrams(){
+float WEIGHT_getGrams() {
   return scale.get_units(5);
 }
 
-bool WEIGHT_isStopFeeding(rtdb_data &food_amount, float current_weight) {
+bool WEIGHT_isStopFeeding(RTDB_DATA &food_amount, float current_weight) {
   double rtdb_weight = food_amount.FB_foodAmount;
   Serial.print(rtdb_weight);
   Serial.print(" : ");
@@ -139,18 +157,17 @@ bool WEIGHT_isStopFeeding(rtdb_data &food_amount, float current_weight) {
 }
 
 // ----- MANUAL FEED -----
-bool STATUS_isFeedNow(rtdb_data &status) {
+bool STATUS_isFeedNow(RTDB_DATA &status) {
   if (status.FB_isFeeding == true && status.FB_status == "DISPENSING") return true;
-  // if (status.FB_isFeeding == true && status.FB_status == "FOODREADY") return true;
   return false;
 }
 
-bool STATUS_isFoodReady(rtdb_data &status) {
+bool STATUS_isFoodReady(RTDB_DATA &status) {
   if (status.FB_isFeeding == true && status.FB_status == "FOODREADY") return true;
   return false;
 }
 
-bool STATUS_isDoneIdle(rtdb_data &status) {
+bool STATUS_isDoneIdle(RTDB_DATA &status) {
   if (status.FB_isFeeding == false && status.FB_status == "IDLE") return true;
   return false;
 }
