@@ -17,7 +17,7 @@ static constexpr uint8_t MOTOR2_PIN = 16;
 static constexpr uint8_t LOADCELL_DOUT = 34;
 static constexpr uint8_t LOADCELL_SCK = 4;
 static constexpr uint8_t LED_PIN = 18;
-static constexpr float LOADCELL_FACTOR = 664.688;
+static constexpr float LOADCELL_FACTOR = 705.011;
 
 
 struct RTDB_DATA;
