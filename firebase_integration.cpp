@@ -14,7 +14,7 @@ RTDB_DATA jsonResp = {
 };
 
 // FirebaseClient objects and anonymous auth (empty email/pass)
-UserAuth user_auth(FIREBASE_KEY, AUTH_EMAIL, AUTH_PASS);  // anonymous sign-in
+UserAuth user_auth(FIREBASE_KEY, AUTH_EMAIL, AUTH_PASS);
 FirebaseApp app;
 WiFiClientSecure ssl_client;
 using AsyncClient = AsyncClientClass;
