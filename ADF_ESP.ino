@@ -1,4 +1,4 @@
-#define DISABLE_DEBUG
+// #define DISABLE_DEBUG
 
 #define ENABLE_USER_AUTH
 #define ENABLE_DATABASE
