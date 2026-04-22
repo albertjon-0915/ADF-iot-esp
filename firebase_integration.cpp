@@ -195,6 +195,18 @@ void firebaseSendStatus(const RTDB_DATA &d) {
   }
 }
 
+void sendWeight(float w){
+  app.loop();
+  if (!app.ready()) return;
+
+  bool okResp = Database.set<number_t>(aClient, "/feeder_status/current_grams", number_t(w));
+  if (!okResp) {
+    Serial.print("C_WEIGHT -> current_grams update error... ");
+  } else {
+    Serial.println("C_WEIGHT -> current_grams updated!");
+  }
+}
+
 void UPDATE(STAGE stage) {
   RTDB_DATA *d;  // this is a pointer
   // use & (if you rebind later)

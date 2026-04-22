@@ -45,8 +45,15 @@ void printResponse() {
   Serial.printf("FIFTH   --> %s\n", jsonResp.FB_fifth);
 }
 
+void checkWeight() {
+  weight = WEIGHT_getGrams();  // read analog value and convert to grams
+  delay(5);
+  sendWeight(weight);
+}
+
 CREATE_ASYNC_FN(GET_dateTime, 5000, assignCurrentTime);
 CREATE_ASYNC_FN(PRINT_res, 1000, printResponse);
+CREATE_ASYNC_FN(C_WEIGHT, 10000, checkWeight);
 
 
 void setup() {
@@ -143,6 +150,7 @@ void loop() {
     }
   }
 
+  asyncDelay(C_WEIGHT);
   // asyncDelay(PRINT_res);
   delay(200);
 }
