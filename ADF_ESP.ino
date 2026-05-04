@@ -46,7 +46,8 @@ void printResponse() {
 }
 
 void checkWeight() {
-  weight = WEIGHT_getGrams();  // read analog value and convert to grams
+  // weight = WEIGHT_getGrams();  // read analog value and convert to grams
+  weight = random(0, 101);
   delay(5);
   updateWeight(weight);
   // sendWeight(weight);
