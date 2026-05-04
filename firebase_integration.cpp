@@ -201,13 +201,16 @@ void firebaseSendStatus(const RTDB_DATA &d) {
 void updateWeight(double weight) {
   app.loop();
   if (!app.ready()) return;
+  
+  String path = "pet/grcKzvoVmf0D7hj83vyX";
 
   Document<Values::Value> doc;
-  String path = "pet/grcKzvoVmf0D7hj83vyX";
+  PatchDocumentOptions patchOptions;
+  
   patchOptions.updateMask("current_grams");
   doc.add("current_grams", Values::Value(weight));
   
-  String payload = Docs.patch(aClient, Firestore::Parent("ADF-Thesis"), path, patchOptions, doc);
+  String payload = Docs.patch(aClient, Firestore::Parent("adf-thesis"), path, patchOptions, doc);
   if (aClient.lastError().code() == 0)
     Serial.println(payload);
   else
