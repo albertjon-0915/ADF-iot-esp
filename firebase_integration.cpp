@@ -20,6 +20,7 @@ WiFiClientSecure ssl_client;
 using AsyncClient = AsyncClientClass;
 AsyncClient aClient(ssl_client);
 RealtimeDatabase Database;
+Firestore::Documents Docs;
 
 enum UIDCode {
   U_RTB_STATUS,
@@ -198,23 +199,23 @@ void firebaseSendStatus(const RTDB_DATA &d) {
   }
 }
 
-void updateWeight(double weight) {
-  app.loop();
-  if (!app.ready()) return;
+void updateWeight(float weight) {
+  // app.loop();
+  // if (!app.ready()) return;
   
-  String path = "pet/grcKzvoVmf0D7hj83vyX";
+  // String path = "pet/grcKzvoVmf0D7hj83vyX";
 
-  Document<Values::Value> doc;
-  PatchDocumentOptions patchOptions;
+  // Document<Values::Value> doc;
+  // PatchDocumentOptions patchOptions;
   
-  patchOptions.updateMask("current_grams");
-  doc.add("current_grams", Values::Value(weight));
+  // patchOptions.updateMask("current_grams");
+  // doc.add("current_grams", Values::Value(weight));
   
-  String payload = Docs.patch(aClient, Firestore::Parent("adf-thesis"), path, patchOptions, doc);
-  if (aClient.lastError().code() == 0)
-    Serial.println(payload);
-  else
-    Firebase.printf("Error, msg: %s, code: %d\n", aClient.lastError().message().c_str(), aClient.lastError().code());
+  // String payload = Docs.patch(aClient, Firestore::Parent("adf-thesis"), path, patchOptions, doc);
+  // if (aClient.lastError().code() == 0)
+  //   Serial.println(payload);
+  // else
+  //   Firebase.printf("Error, msg: %s, code: %d\n", aClient.lastError().message().c_str(), aClient.lastError().code());
 }
 
 void sendWeight(float w){

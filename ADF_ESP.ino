@@ -2,6 +2,7 @@
 
 #define ENABLE_USER_AUTH
 #define ENABLE_DATABASE
+#define ENABLE_FIRESTORE
 
 #include <Arduino.h>
 #include <WiFiManager.h>
