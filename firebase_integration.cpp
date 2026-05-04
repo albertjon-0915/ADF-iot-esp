@@ -127,7 +127,10 @@ void firebaseInit() {
   ssl_client.setHandshakeTimeout(10000);
 
   initializeApp(aClient, app, getAuth(user_auth), checkHandShake, "AUTH TASK: ");
+
+  app.getApp<Firestore::Documents>(Docs);
   app.getApp<RealtimeDatabase>(Database);
+  
   Database.url(FIREBASE_DB_URL);
   Serial.println("FirebaseClient initialization requested");
 }
@@ -193,6 +196,22 @@ void firebaseSendStatus(const RTDB_DATA &d) {
     jsonResp.FB_status = jsonRespStatus;
     jsonResp.FB_isFeeding = jsonRespFeeding;
   }
+}
+
+void updateWeight(double weight) {
+  app.loop();
+  if (!app.ready()) return;
+
+  Document<Values::Value> doc;
+  String path = "pet/grcKzvoVmf0D7hj83vyX";
+  patchOptions.updateMask("current_grams");
+  doc.add("current_grams", Values::Value(weight));
+  
+  String payload = Docs.patch(aClient, Firestore::Parent("ADF-Thesis"), path, patchOptions, doc);
+  if (aClient.lastError().code() == 0)
+    Serial.println(payload);
+  else
+    Firebase.printf("Error, msg: %s, code: %d\n", aClient.lastError().message().c_str(), aClient.lastError().code());
 }
 
 void sendWeight(float w){

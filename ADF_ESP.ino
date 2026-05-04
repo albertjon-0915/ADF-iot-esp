@@ -48,7 +48,8 @@ void printResponse() {
 void checkWeight() {
   weight = WEIGHT_getGrams();  // read analog value and convert to grams
   delay(5);
-  sendWeight(weight);
+  updateWeight(weight);
+  // sendWeight(weight);
 }
 
 CREATE_ASYNC_FN(GET_dateTime, 5000, assignCurrentTime);
