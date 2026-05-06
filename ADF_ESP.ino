@@ -47,16 +47,15 @@ void printResponse() {
 }
 
 void checkWeight() {
-  // weight = WEIGHT_getGrams();  // read analog value and convert to grams
-  weight = random(0, 101);
+  weight = WEIGHT_getGrams();  // read analog value and convert to grams
+  // weight = random(0, 101);
   delay(5);
   updateWeight(weight);
-  // sendWeight(weight);
 }
 
 CREATE_ASYNC_FN(GET_dateTime, 5000, assignCurrentTime);
 CREATE_ASYNC_FN(PRINT_res, 1000, printResponse);
-CREATE_ASYNC_FN(C_WEIGHT, 10000, checkWeight);
+CREATE_ASYNC_FN(CHECK_WEIGHT, 10000, checkWeight);
 
 
 void setup() {
@@ -86,74 +85,74 @@ void loop() {
 
   firebasePoll();
 
-  // STATUS_ISFEED = STATUS_isFeedNow(jsonResp);
-  // TIME_ISFEED = TIME_isFeedNow(jsonResp);
+  STATUS_ISFEED = STATUS_isFeedNow(jsonResp);
+  TIME_ISFEED = TIME_isFeedNow(jsonResp);
 
 
-  // if (!PREVENT_STATUSFEED && STATUS_ISFEED && CONTROLLER == INACTIVITY) CONTROLLER = INITIAL;
-  // if (!PREVENT_TIMEFEED && TIME_ISFEED && CONTROLLER == INACTIVITY) {
-  //   PREVENT_STATUSFEED = true;
-  //   PREVENT_TIMEFEED = true;
-  //   CONTROLLER = INITIAL;
-  // }
+  if (!PREVENT_STATUSFEED && STATUS_ISFEED && CONTROLLER == INACTIVITY) CONTROLLER = INITIAL;
+  if (!PREVENT_TIMEFEED && TIME_ISFEED && CONTROLLER == INACTIVITY) {
+    PREVENT_STATUSFEED = true;
+    PREVENT_TIMEFEED = true;
+    CONTROLLER = INITIAL;
+  }
 
-  // if(!TIME_ISFEED){
-  //   PREVENT_TIMEFEED = false;
-  // }
+  if(!TIME_ISFEED){
+    PREVENT_TIMEFEED = false;
+  }
 
 
-  // if (CONTROLLER == INITIAL) {
-  //   Serial.println("FIRST STAGE");
+  if (CONTROLLER == INITIAL) {
+    Serial.println("FIRST STAGE");
 
-  //   if (TIME_ISFEED) {
-  //     UPDATE(FIRST);
-  //     Serial.println("via TIME: Feed time !!!");
-  //   }
+    if (TIME_ISFEED) {
+      UPDATE(FIRST);
+      Serial.println("via TIME: Feed time !!!");
+    }
 
-  //   if (STATUS_ISFEED) Serial.println("via MANUAL: Feeding time !!!");
+    if (STATUS_ISFEED) Serial.println("via MANUAL: Feeding time !!!");
 
-  //   rotateAction();
-  //   CONTROLLER = PROCCEED;
-  // }
+    rotateAction();
+    CONTROLLER = PROCCEED;
+  }
 
-  // if (CONTROLLER == PROCCEED) {
-  //   Serial.println("SECOND STAGE");
-  //   weight = WEIGHT_getGrams();  // read analog value and convert to grams
+  if (CONTROLLER == PROCCEED) {
+    Serial.println("SECOND STAGE");
+    weight = WEIGHT_getGrams();  // read analog value and convert to grams
 
-  //   if (WEIGHT_isStopFeeding(jsonResp, weight)) {
-  //     bool cycle = false;
-  //     stopRotateAction();
+    if (WEIGHT_isStopFeeding(jsonResp, weight)) {
+      bool cycle = false;
+      stopRotateAction();
 
-  //     while (!cycle) {
-  //       UPDATE(SECOND);  // update to foodready
-  //       delay(2000);
-  //       cycle = STATUS_isFoodReady(jsonResp);
-  //     }
+      while (!cycle) {
+        UPDATE(SECOND);  // update to foodready
+        delay(2000);
+        cycle = STATUS_isFoodReady(jsonResp);
+      }
 
-  //     CONTROLLER = END;
-  //   }
-  // }
+      CONTROLLER = END;
+    }
+  }
 
-  // if (CONTROLLER == END) {
-  //   Serial.println("FINAL STAGE");
-  //   weight = WEIGHT_getGrams();  // read analog value and convert to grams
+  if (CONTROLLER == END) {
+    Serial.println("FINAL STAGE");
+    weight = WEIGHT_getGrams();  // read analog value and convert to grams
 
-  //   if (weight <= 5) {
-  //     bool cycle = false;
+    if (weight <= 5) {
+      bool cycle = false;
 
-  //     while (!cycle) {
-  //       UPDATE(FINAL);  // update to IDLE
-  //       delay(2000);
-  //       cycle = STATUS_isDoneIdle(jsonResp);
-  //     }
+      while (!cycle) {
+        UPDATE(FINAL);  // update to IDLE
+        delay(2000);
+        cycle = STATUS_isDoneIdle(jsonResp);
+      }
 
-  //     CL_trigger();
-  //     CONTROLLER = INACTIVITY;
-  //     PREVENT_STATUSFEED = false;
-  //   }
-  // }
+      CL_trigger();
+      CONTROLLER = INACTIVITY;
+      PREVENT_STATUSFEED = false;
+    }
+  }
 
-  asyncDelay(C_WEIGHT);
+  asyncDelay(CHECK_WEIGHT);
   // asyncDelay(PRINT_res);
   delay(200);
 }

@@ -26,7 +26,6 @@ struct WEIGHT;
 void firebaseInit();                          // call after WiFi connected
 void firebasePoll();                          // call regularly from loop()
 void firebaseSendStatus(const RTDB_DATA &d);  // send status update to RTDB
-void sendWeight(w);  
 void updateWeight(float weight); 
 
 struct RTDB_DATA {

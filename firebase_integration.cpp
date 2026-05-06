@@ -200,34 +200,22 @@ void firebaseSendStatus(const RTDB_DATA &d) {
 }
 
 void updateWeight(float weight) {
-  // app.loop();
-  // if (!app.ready()) return;
-  
-  // String path = "pet/grcKzvoVmf0D7hj83vyX";
-
-  // Document<Values::Value> doc;
-  // PatchDocumentOptions patchOptions;
-  
-  // patchOptions.updateMask("current_grams");
-  // doc.add("current_grams", Values::Value(weight));
-  
-  // String payload = Docs.patch(aClient, Firestore::Parent("adf-thesis"), path, patchOptions, doc);
-  // if (aClient.lastError().code() == 0)
-  //   Serial.println(payload);
-  // else
-  //   Firebase.printf("Error, msg: %s, code: %d\n", aClient.lastError().message().c_str(), aClient.lastError().code());
-}
-
-void sendWeight(float w){
   app.loop();
   if (!app.ready()) return;
+  
+  String path = "pet/grcKzvoVmf0D7hj83vyX";
 
-  bool okResp = Database.set<number_t>(aClient, "/feeder_status/current_grams", number_t(w));
-  if (!okResp) {
-    Serial.print("C_WEIGHT -> current_grams update error... ");
-  } else {
-    Serial.println("C_WEIGHT -> current_grams updated!");
-  }
+  Document<Values::Value> doc;
+  Values::DoubleValue dblV(number_t(weight, 6));
+  PatchDocumentOptions patchOptions(DocumentMask("current_grams"), DocumentMask(), Precondition());
+  
+  doc.add("current_grams", Values::Value(dblV));
+  
+  String payload = Docs.patch(aClient, Firestore::Parent("adf-thesis"), path, patchOptions, doc);
+  if (aClient.lastError().code() == 0)
+    Serial.println(payload);
+  else
+    Firebase.printf("Error, msg: %s, code: %d\n", aClient.lastError().message().c_str(), aClient.lastError().code());
 }
 
 void UPDATE(STAGE stage) {
